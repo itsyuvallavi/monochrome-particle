@@ -1,73 +1,37 @@
 # Monochrome Particle
 
-Agent skills for building a **configurable full-viewport Three.js particle wave background** (layered `Points`, GLSL shaders, soft sprites, additive blending).
+**[Website](https://itsyuvallavi.github.io/monochrome-particle/)** · **[Repository](https://github.com/itsyuvallavi/monochrome-particle)**
 
-The files are **plain Markdown** (`SKILL.md` plus reference and example). Any coding agent or IDE can follow them as long as the model receives the text—for example **Cursor**, **VS Code** and forks, **Claude Code**, **OpenAI Codex**, **Google Gemini** in compatible clients, **Windsurf**, **JetBrains AI**, **GitHub Copilot Chat**, or a **web UI** if you paste or attach the skill.
+[![Agent Skills](https://img.shields.io/badge/Agent_Skills-compatible-2dd4bf?style=flat-square)](https://github.com/vercel-labs/agent-skills)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/itsyuvallavi/monochrome-particle?style=flat-square&color=yellow)](https://github.com/itsyuvallavi/monochrome-particle/stargazers)
 
-The [Agent Skills CLI](https://github.com/vercel-labs/agent-skills) is one install path (often used from Cursor). If your product does not use that flow, copy the `skills/monochrome-particle/` folder into your tool’s skill/rules directory, or paste `SKILL.md` into the system prompt or project instructions.
+Portable **Agent Skills** for a configurable, full-viewport **Three.js** particle wave: layered `Points`, GLSL waves, soft circular sprites, additive blending, and sensible mobile/desktop density. The model gets clear knobs for **colors, speed, direction, density, point size, and opacity** instead of hunting shader constants.
 
-The skill is **background-only**: no route transitions, no sandstorm-style providers, and no CTA-driven navigation.
+**Background only** — no route transitions, no “storm” providers, no CTA wiring. Works anywhere the instructions reach the model (Cursor, Claude Code, Codex, Windsurf, Copilot, Gemini-capable clients, JetBrains AI, VS Code–based agents, or paste into a web chat).
 
-## Install (one line)
+## Installing
 
-When your environment supports it, the [Agent Skills CLI](https://github.com/vercel-labs/agent-skills) accepts GitHub **`owner/repo`** shorthand (shortest form):
+Works via CLI for major AI coding agents (Cursor, Claude Code, Codex, Windsurf, Copilot, Antigravity, Gemini extensions, etc.):
 
 ```bash
 npx skills add itsyuvallavi/monochrome-particle
 ```
 
-Equivalent full URL:
+Or copy `skills/monochrome-particle/` into your project’s skills/rules folder, or open **`SKILL.md`** and paste it into ChatGPT / Codex / any agent session.
 
-```bash
-npx skills add https://github.com/itsyuvallavi/monochrome-particle
-```
+Full options: [docs/INSTALL.md](docs/INSTALL.md)
 
-To install only this skill when the CLI prompts or supports filtering:
+## Skills
 
-```bash
-npx skills add itsyuvallavi/monochrome-particle --skill monochrome-particle
-```
-
-## Site
-
-If [GitHub Pages](https://pages.github.com/) is enabled with source **`/docs`** on branch **`main`**, the landing page is:
-
-[https://itsyuvallavi.github.io/monochrome-particle/](https://itsyuvallavi.github.io/monochrome-particle/)
-
-## Install (manual)
-
-1. Clone [github.com/itsyuvallavi/monochrome-particle](https://github.com/itsyuvallavi/monochrome-particle).
-2. Copy `skills/monochrome-particle/` into the folder your tool expects, for example:
-   - **Cursor (project):** `<your-project>/.cursor/skills/monochrome-particle/`
-   - **Cursor (user):** `~/.cursor/skills/monochrome-particle/`
-   - **Other products:** use that product’s documented “skills”, “rules”, “instructions”, or “AGENTS” path, or keep the folder in-repo and `@`-reference the files from your prompt if supported.
-
-If there is no auto-loader, paste the contents of `SKILL.md` (and optionally `reference.md`) into the model context or project rules so the agent still follows the same contract.
-
-Expected layout:
-
-```text
-monochrome-particle/
-├── SKILL.md
-├── reference.md
-└── examples/
-    └── MonochromeDotsBackground.tsx
-```
-
-## Contents
-
-| Path | Purpose |
+| Skill | Description |
 | --- | --- |
-| `skills/monochrome-particle/SKILL.md` | Agent instructions and scope |
-| `skills/monochrome-particle/reference.md` | Shader contract, layers, performance |
-| `skills/monochrome-particle/examples/MonochromeDotsBackground.tsx` | React + Three.js example (`colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`) |
+| **monochrome-particle** | Full-viewport Three.js monochrome particle field with a prop-driven customization contract (`colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`). Includes `reference.md` and `examples/MonochromeDotsBackground.tsx`. |
 
-## Documentation
+## Feedback & contributions
 
-- [Install & CLI](docs/INSTALL.md)
-- [Contributing](CONTRIBUTING.md)
-- [Landing page (source)](docs/index.html)
+Open a [Pull Request](https://github.com/itsyuvallavi/monochrome-particle/pulls) or [Issue](https://github.com/itsyuvallavi/monochrome-particle/issues). See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+[MIT](LICENSE)

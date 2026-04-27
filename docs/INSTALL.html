@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Install — Monochrome Particle</title>
+    <style>
+      :root {
+        --bg: #050508;
+        --panel: rgba(255, 255, 255, 0.04);
+        --border: rgba(255, 255, 255, 0.08);
+        --text: #e4e4e7;
+        --muted: #a1a1aa;
+        --accent: #2dd4bf;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.65;
+      }
+      .wrap {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem 4rem;
+      }
+      h1 {
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.5rem;
+      }
+      h2 {
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--muted);
+        margin: 2rem 0 0.75rem;
+      }
+      p,
+      li {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+      a {
+        color: var(--accent);
+      }
+      pre {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        overflow-x: auto;
+        font-size: 0.8rem;
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: #fafafa;
+      }
+      .back {
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <p class="back"><a href="./index.html">← Monochrome Particle</a></p>
+      <h1>Install</h1>
+
+      <h2>Prerequisites</h2>
+      <ul>
+        <li><a href="https://nodejs.org/">Node.js</a> if you use <code>npx</code>.</li>
+        <li>
+          <a href="https://cursor.com/">Cursor</a> or another agent that loads skills from
+          <code>.cursor/skills/</code>.
+        </li>
+      </ul>
+
+      <h2>Option A: Agent Skills CLI</h2>
+      <p>
+        Same pattern as collections like
+        <a href="https://github.com/Leonxlnx/taste-skill">taste-skill</a>:
+      </p>
+      <pre><code>npx skills add https://github.com/YOUR_USERNAME/monochrome-particle</code></pre>
+      <p>Replace <code>YOUR_USERNAME</code> with your GitHub user or organization.</p>
+
+      <h2>Option B: Git clone and copy</h2>
+      <pre><code>git clone https://github.com/YOUR_USERNAME/monochrome-particle.git
+cd monochrome-particle</code></pre>
+      <p>Into a project:</p>
+      <pre><code>mkdir -p /path/to/your-project/.cursor/skills
+cp -R skills/monochrome-particle /path/to/your-project/.cursor/skills/</code></pre>
+      <p>Personal (all projects):</p>
+      <pre><code>mkdir -p ~/.cursor/skills
+cp -R skills/monochrome-particle ~/.cursor/skills/</code></pre>
+
+      <h2>Option C: install.sh</h2>
+      <p>From a local clone of this repository:</p>
+      <pre><code>chmod +x install.sh
+./install.sh          # ~/.cursor/skills/monochrome-particle
+./install.sh project  # ./.cursor/skills/monochrome-particle</code></pre>
+
+      <h2>Verify</h2>
+      <p>
+        Open your project in Cursor and reference <code>@.cursor/skills/monochrome-particle/SKILL.md</code> in your
+        prompt, or ask the agent to follow the Monochrome Particle skill.
+      </p>
+    </div>
+  </body>
+</html>

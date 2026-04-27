@@ -6,12 +6,24 @@ description: >-
   additive blending, and mobile/desktop density tiers. Use for Next.js/React
   canvas backgrounds, Three.js Points shaders, monochrome dots, particle wave,
   animated hero backdrop, or requests to change particle colors, speed,
-  direction, density, point size, or opacity. Does NOT cover page transitions,
+  direction, density, point size, or opacity. Portable Markdown instructions:
+  applies in any coding agent or IDE that loads SKILL.md (Cursor, Claude Code,
+  OpenAI Codex, Google Gemini, Windsurf, JetBrains AI, Copilot Chat, VS
+  Code–based agents, or paste into web UIs). Does NOT cover page transitions,
   SandstormProvider, sandstorm hooks, button-triggered navigation, or route
   orchestration; only the static/ambient background.
 ---
 
 # Monochrome Particle
+
+## Portability
+
+This package is **not Cursor-specific**. It is a portable `SKILL.md` plus supporting Markdown and a TypeScript example. Use it anywhere the model can read files or pasted instructions:
+
+- **Cursor:** project or user `.cursor/skills/monochrome-particle/`, or `npx skills add itsyuvallavi/monochrome-particle` when supported.
+- **Other IDEs and agents:** follow that product’s documented location for skills, rules, custom instructions, or repository context; if none exists, attach `SKILL.md` and `reference.md` to the chat or add them to your project’s agent configuration file.
+
+Tool-specific install mechanics may differ; the **implementation contract** (customization surface, shaders, cleanup) does not.
 
 ## Scope
 

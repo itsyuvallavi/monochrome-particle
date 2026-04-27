@@ -75,10 +75,11 @@
 
       <h2>Prerequisites</h2>
       <ul>
-        <li><a href="https://nodejs.org/">Node.js</a> for <code>npx</code></li>
+        <li><a href="https://nodejs.org/">Node.js</a> if you use <code>npx</code> with the Agent Skills CLI</li>
         <li>
-          <a href="https://cursor.com/">Cursor</a> or another agent that reads
-          <code>.cursor/skills/</code>
+          Any coding agent or IDE that can follow Markdown instructions (Cursor, VS Code–based agents, Claude Code,
+          Codex, Gemini, Windsurf, JetBrains AI, Copilot Chat, and so on). The CLI install is optional — you can clone
+          this repo and copy <code>skills/monochrome-particle/</code>, or paste <code>SKILL.md</code> into your tool.
         </li>
       </ul>
 
@@ -110,8 +111,9 @@ chmod +x install.sh
 
       <h2>Verify</h2>
       <p>
-        In Cursor, reference <code>@.cursor/skills/monochrome-particle/SKILL.md</code> or ask the agent to follow the
-        Monochrome Particle skill.
+        In <strong>Cursor</strong>, reference <code>@.cursor/skills/monochrome-particle/SKILL.md</code> or ask the
+        agent to follow the Monochrome Particle skill. In other products, point the agent at the installed files or
+        paste <code>SKILL.md</code> so the same contract applies.
       </p>
     </div>
   </body>

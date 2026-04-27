@@ -2,6 +2,8 @@
 
 This reference describes the background-only effect. It intentionally excludes route transitions, sandstorm providers, CTA button triggers, and page opacity orchestration.
 
+These notes are **editor- and model-agnostic**: they apply whether the agent runs in Cursor, Claude Code, Codex, Gemini, Windsurf, JetBrains, Copilot, or a web chat, as long as the instructions are available to the model.
+
 ## Visual Model
 
 - A fixed full-viewport canvas sits behind page content.

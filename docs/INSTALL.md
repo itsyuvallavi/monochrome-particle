@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) if you use `npx`.
-- [Cursor](https://cursor.com/) or another agent that loads skills from `.cursor/skills/`.
+- [Node.js](https://nodejs.org/) if you use `npx` with the Agent Skills CLI.
+- A coding agent or IDE that can apply Markdown instructions (for example Cursor, VS Code–based agents, Claude Code, Codex, Gemini, Windsurf, JetBrains AI, Copilot Chat). The CLI path below is optional; you can always **clone this repo and copy** `skills/monochrome-particle/` or **paste `SKILL.md`** into your tool of choice.
 
 ## Option A: Agent Skills CLI (recommended)
 
@@ -64,4 +64,4 @@ chmod +x install.sh
 
 ## Verify
 
-Open your project in Cursor and reference `@.cursor/skills/monochrome-particle/SKILL.md`, or ask the agent to follow the **Monochrome Particle** skill.
+In **Cursor**, reference `@.cursor/skills/monochrome-particle/SKILL.md` or ask the agent to follow the **Monochrome Particle** skill. In **other tools**, open the same files from wherever you installed them, or paste `SKILL.md` into the session so the model applies the customization contract.

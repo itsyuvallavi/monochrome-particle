@@ -2,6 +2,8 @@
 
 ## Adding or editing a skill
 
+Keep language **product-neutral** where possible: skills are Markdown instructions that should remain useful across Cursor, Claude Code, Codex, Gemini, Windsurf, JetBrains, Copilot, VS Code–based agents, and web UIs that accept pasted context.
+
 1. Each skill lives under `skills/<skill-slug>/` with a required `SKILL.md`.
 2. Keep `SKILL.md` focused. Move long reference material to `reference.md` or `examples/`.
 3. YAML frontmatter must include:

@@ -6,17 +6,25 @@
     <title>Monochrome Particle — Agent skill</title>
     <meta
       name="description"
-      content="Cursor and Agent Skills for a configurable Three.js monochrome particle wave background."
+      content="Install a Cursor / Agent Skills pack for a configurable Three.js monochrome particle wave background."
     />
+    <meta name="theme-color" content="#050508" />
+    <meta property="og:title" content="Monochrome Particle" />
+    <meta
+      property="og:description"
+      content="Three.js full-viewport particle wave skill for coding agents — configurable colors, speed, direction, density."
+    />
+    <meta property="og:type" content="website" />
     <style>
       :root {
-        --bg: #050508;
-        --panel: rgba(255, 255, 255, 0.04);
-        --border: rgba(255, 255, 255, 0.08);
-        --text: #e4e4e7;
+        --bg: #030306;
+        --surface: rgba(255, 255, 255, 0.035);
+        --border: rgba(255, 255, 255, 0.09);
+        --text: #f4f4f5;
         --muted: #a1a1aa;
         --accent: #2dd4bf;
-        --accent-dim: rgba(45, 212, 191, 0.15);
+        --accent-soft: rgba(45, 212, 191, 0.12);
+        --violet: rgba(167, 139, 250, 0.1);
       }
       * {
         box-sizing: border-box;
@@ -24,11 +32,12 @@
       body {
         margin: 0;
         min-height: 100vh;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-        background: radial-gradient(1200px 800px at 10% -10%, rgba(45, 212, 191, 0.08), transparent 55%),
-          radial-gradient(900px 600px at 90% 0%, rgba(168, 85, 247, 0.07), transparent 50%), var(--bg);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background:
+          radial-gradient(1000px 700px at 0% 0%, var(--accent-soft), transparent 55%),
+          radial-gradient(800px 500px at 100% 10%, var(--violet), transparent 50%), var(--bg);
         color: var(--text);
-        line-height: 1.6;
+        line-height: 1.55;
       }
       a {
         color: var(--accent);
@@ -37,115 +46,178 @@
       a:hover {
         text-decoration: underline;
       }
-      .wrap {
-        max-width: 720px;
+      .shell {
+        max-width: 880px;
         margin: 0 auto;
-        padding: 4rem 1.5rem 5rem;
+        padding: 3.25rem 1.5rem 4.5rem;
       }
-      .eyebrow {
-        font-size: 0.7rem;
-        letter-spacing: 0.22em;
-        text-transform: uppercase;
-        color: var(--muted);
+      header {
+        margin-bottom: 2.5rem;
+      }
+      .row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem 1rem;
         margin-bottom: 1rem;
       }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        background: var(--surface);
+      }
       h1 {
-        font-size: clamp(2rem, 6vw, 2.75rem);
+        font-size: clamp(2.1rem, 5.5vw, 3rem);
         font-weight: 700;
-        letter-spacing: -0.03em;
-        line-height: 1.1;
-        margin: 0 0 1rem;
+        letter-spacing: -0.035em;
+        line-height: 1.05;
+        margin: 0 0 0.85rem;
       }
       .lead {
-        font-size: 1.05rem;
+        margin: 0;
+        max-width: 54ch;
+        font-size: 1.08rem;
         color: var(--muted);
-        margin: 0 0 2rem;
-        max-width: 52ch;
       }
-      .panel {
-        background: var(--panel);
+      .grid {
+        display: grid;
+        gap: 1.25rem;
+      }
+      @media (min-width: 720px) {
+        .grid {
+          grid-template-columns: 1.15fr 0.85fr;
+          align-items: start;
+        }
+      }
+      .card {
+        background: var(--surface);
         border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 1.25rem 1.35rem;
-        margin-bottom: 1.5rem;
+        border-radius: 14px;
+        padding: 1.35rem 1.4rem;
       }
-      .panel h2 {
-        font-size: 0.75rem;
+      .card h2 {
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
         text-transform: uppercase;
-        letter-spacing: 0.12em;
         color: var(--muted);
-        margin: 0 0 0.75rem;
+        margin: 0 0 0.85rem;
         font-weight: 600;
+      }
+      .card p {
+        margin: 0 0 0.85rem;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+      .card p:last-child {
+        margin-bottom: 0;
       }
       pre {
         margin: 0;
-        font-size: 0.8rem;
-        line-height: 1.55;
+        padding: 1rem 1.1rem;
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.45);
+        border: 1px solid var(--border);
+        font-size: 0.84rem;
+        line-height: 1.5;
         overflow-x: auto;
         color: #fafafa;
       }
       code {
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       }
+      .hint {
+        margin-top: 0.65rem;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
       ul {
         margin: 0;
-        padding-left: 1.15rem;
+        padding-left: 1.1rem;
         color: var(--muted);
-        font-size: 0.95rem;
+        font-size: 0.9rem;
       }
-      li {
-        margin-bottom: 0.35rem;
+      li + li {
+        margin-top: 0.35rem;
       }
       .links {
         display: flex;
         flex-wrap: wrap;
-        gap: 1rem;
-        margin-top: 2rem;
+        gap: 0.75rem 1.25rem;
+        margin-top: 1.75rem;
         font-size: 0.9rem;
       }
       footer {
-        margin-top: 3rem;
-        font-size: 0.8rem;
+        margin-top: 2.75rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.78rem;
         color: var(--muted);
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <p class="eyebrow">Agent skill</p>
-      <h1>Monochrome Particle</h1>
-      <p class="lead">
-        A portable skill for coding agents: build a full-viewport Three.js layered particle wave with clear knobs
-        for colors, speed, direction, density, point size, and opacity. Background only — no route transitions or
-        CTA wiring.
-      </p>
-
-      <div class="panel">
-        <h2>Install (CLI)</h2>
-        <p style="margin: 0 0 0.75rem; font-size: 0.9rem; color: var(--muted)">
-          After you publish the GitHub repository, replace the URL with your repo.
+    <div class="shell">
+      <header>
+        <div class="row">
+          <span class="pill">Agent skill</span>
+          <a href="https://github.com/itsyuvallavi/monochrome-particle">github.com/itsyuvallavi/monochrome-particle</a>
+        </div>
+        <h1>Monochrome Particle</h1>
+        <p class="lead">
+          A small skills pack for coding agents: implement a full-viewport Three.js layered particle field with
+          explicit controls for gradient colors, animation speed, flow direction, density, point size, and opacity.
+          Scope is the ambient canvas only — not page transitions or CTA wiring.
         </p>
-        <pre><code>npx skills add https://github.com/YOUR_USERNAME/monochrome-particle</code></pre>
-      </div>
+      </header>
 
-      <div class="panel">
-        <h2>What you get</h2>
-        <ul>
-          <li><code>skills/monochrome-particle/SKILL.md</code> — agent instructions</li>
-          <li><code>skills/monochrome-particle/reference.md</code> — shader and performance reference</li>
-          <li><code>skills/monochrome-particle/examples/MonochromeDotsBackground.tsx</code> — copy-paste React example</li>
-        </ul>
+      <div class="grid">
+        <div class="card">
+          <h2>Install</h2>
+          <p>Use the Agent Skills CLI with GitHub shorthand (shortest):</p>
+          <pre><code>npx skills add itsyuvallavi/monochrome-particle</code></pre>
+          <p class="hint">Same as <code>npx skills add https://github.com/itsyuvallavi/monochrome-particle</code> — the CLI accepts <code>owner/repo</code>.</p>
+          <p class="hint" style="margin-top: 0.5rem">
+            Optional filter (if your CLI supports <code>--skill</code>):
+            <code>npx skills add itsyuvallavi/monochrome-particle --skill monochrome-particle</code>
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>LLM-friendly knobs</h2>
+          <p style="margin-bottom: 0.65rem">Users should be able to ask in plain language, for example:</p>
+          <ul>
+            <li>“Slow the motion down” → <code>speed</code></li>
+            <li>“Drift up and left” → <code>direction</code></li>
+            <li>“More particles” → <code>density</code></li>
+            <li>“Cooler palette” → <code>colors.start|mid|end</code></li>
+          </ul>
+          <p style="margin-top: 0.85rem">See <code>examples/MonochromeDotsBackground.tsx</code> in the repo.</p>
+        </div>
       </div>
 
       <div class="links">
-        <a href="https://github.com/YOUR_USERNAME/monochrome-particle">GitHub repository</a>
-        <a href="./INSTALL.html">Install guide</a>
-        <a href="https://github.com/vercel-labs/agent-skills">Agent Skills</a>
+        <a href="https://github.com/itsyuvallavi/monochrome-particle">Repository</a>
+        <a
+          href="https://github.com/itsyuvallavi/monochrome-particle/blob/main/skills/monochrome-particle/SKILL.md"
+          >SKILL.md (source)</a
+        >
+        <a href="./INSTALL.html">Full install guide</a>
+        <a href="https://github.com/vercel-labs/agent-skills">About Agent Skills</a>
       </div>
 
       <footer>
-        MIT License. Host this page with GitHub Pages from the <code>/docs</code> folder, or deploy the
-        <code>docs/</code> directory to any static host.
+        MIT License · Enable
+        <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site">GitHub Pages</a>
+        from the <code>/docs</code> folder on <code>main</code> to serve this site at
+        <code>https://itsyuvallavi.github.io/monochrome-particle/</code>
       </footer>
     </div>
   </body>

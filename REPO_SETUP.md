@@ -1,47 +1,27 @@
-# Publish this repository to GitHub
+# Repository setup notes
 
-This folder is a **standalone git repository** on disk. It is not nested inside `dev-portfolio`.
+The public repository lives at:
 
-## 1. Create an empty repository on GitHub
+[https://github.com/itsyuvallavi/monochrome-particle](https://github.com/itsyuvallavi/monochrome-particle)
 
-Create a new public repository named `monochrome-particle` (or your preferred name). Do not add a README, `.gitignore`, or license on GitHub if you want a clean first push from this tree.
+## Short install command
 
-## 2. Initialize git (if needed)
-
-```bash
-cd /path/to/monochrome-particle
-git init
-git add .
-git commit -m "Initial commit: Monochrome Particle skill and docs"
-```
-
-## 3. Add the remote and push
+The Agent Skills CLI accepts GitHub shorthand (see [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)):
 
 ```bash
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/monochrome-particle.git
-git push -u origin main
+npx skills add itsyuvallavi/monochrome-particle
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username or organization.
-
-## 4. Replace placeholders
-
-Search the repo for `YOUR_USERNAME` and replace with your real GitHub slug:
-
-- `README.md`
-- `docs/index.html`
-- `docs/INSTALL.md`
-- `docs/INSTALL.html`
-
-## 5. GitHub Pages (optional)
+## GitHub Pages
 
 1. Repository **Settings → Pages**
 2. Source: **Deploy from a branch**
 3. Branch: **main**, folder: **/docs**
 
-The site will be served at `https://YOUR_USERNAME.github.io/monochrome-particle/` (exact URL depends on repo name and org pages settings).
+Site URL pattern:
 
-## 6. Keep portfolio in sync (optional)
+[https://itsyuvallavi.github.io/monochrome-particle/](https://itsyuvallavi.github.io/monochrome-particle/)
 
-Your portfolio can keep a copy under `.cursor/skills/monochrome-particle/` for offline use, or you can document `npx skills add ...` in the portfolio README and remove the duplicate.
+## Forks
+
+If you fork this repo, replace `itsyuvallavi` with your GitHub username in `README.md`, `docs/index.html`, `docs/INSTALL.md`, and `docs/INSTALL.html`.

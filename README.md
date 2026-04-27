@@ -1,27 +1,43 @@
 # Monochrome Particle
 
-Agent skills for building a **configurable full-viewport Three.js particle wave background** (layered `Points`, GLSL shaders, soft sprites, additive blending). Designed for Cursor, Claude Code, and other tools that read `SKILL.md` files.
+Agent skills for building a **configurable full-viewport Three.js particle wave background** (layered `Points`, GLSL shaders, soft sprites, additive blending). Works with Cursor, Claude Code, and other tools that read `SKILL.md` files.
 
-The skill teaches a **background-only** implementation: no route transitions, no sandstorm providers, and no CTA-driven navigation.
+The skill is **background-only**: no route transitions, no sandstorm-style providers, and no CTA-driven navigation.
 
-## Install (recommended)
+## Install (one line)
 
-If you use the Agent Skills CLI ([`skills`](https://github.com/vercel-labs/agent-skills)):
+The [Agent Skills CLI](https://github.com/vercel-labs/agent-skills) accepts GitHub **`owner/repo`** shorthand (shortest form):
 
 ```bash
-npx skills add https://github.com/YOUR_USERNAME/monochrome-particle
+npx skills add itsyuvallavi/monochrome-particle
 ```
 
-Replace `YOUR_USERNAME` with your GitHub username or org after you publish the repo.
+Equivalent full URL:
+
+```bash
+npx skills add https://github.com/itsyuvallavi/monochrome-particle
+```
+
+To install only this skill when the CLI prompts or supports filtering:
+
+```bash
+npx skills add itsyuvallavi/monochrome-particle --skill monochrome-particle
+```
+
+## Site
+
+If [GitHub Pages](https://pages.github.com/) is enabled with source **`/docs`** on branch **`main`**, the landing page is:
+
+[https://itsyuvallavi.github.io/monochrome-particle/](https://itsyuvallavi.github.io/monochrome-particle/)
 
 ## Install (manual)
 
-1. Clone this repository.
-2. Copy the folder `skills/monochrome-particle/` into either:
+1. Clone [github.com/itsyuvallavi/monochrome-particle](https://github.com/itsyuvallavi/monochrome-particle).
+2. Copy `skills/monochrome-particle/` into either:
    - **Project skills:** `<your-project>/.cursor/skills/monochrome-particle/`
    - **Personal skills:** `~/.cursor/skills/monochrome-particle/`
 
-You should end up with:
+Expected layout:
 
 ```text
 monochrome-particle/
@@ -37,13 +53,13 @@ monochrome-particle/
 | --- | --- |
 | `skills/monochrome-particle/SKILL.md` | Agent instructions and scope |
 | `skills/monochrome-particle/reference.md` | Shader contract, layers, performance |
-| `skills/monochrome-particle/examples/MonochromeDotsBackground.tsx` | Copy-paste React + Three.js example with props for colors, speed, direction, density, point size, opacity |
+| `skills/monochrome-particle/examples/MonochromeDotsBackground.tsx` | React + Three.js example (`colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`) |
 
 ## Documentation
 
 - [Install & CLI](docs/INSTALL.md)
 - [Contributing](CONTRIBUTING.md)
-- [Landing page](docs/index.html) (for GitHub Pages or static hosting)
+- [Landing page (source)](docs/index.html)
 
 ## License
 

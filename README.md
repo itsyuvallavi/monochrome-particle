@@ -22,6 +22,15 @@ Or copy `skills/monochrome-particle/` into your project’s skills/rules folder,
 
 Full options: [docs/INSTALL.md](docs/INSTALL.md)
 
+## Validate the example
+
+The repo includes a tiny TypeScript setup for checking the example component:
+
+```bash
+npm install
+npm run typecheck
+```
+
 ## Skills
 
 | Skill | Description |

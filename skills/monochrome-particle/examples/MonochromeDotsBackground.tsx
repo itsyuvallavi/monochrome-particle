@@ -25,6 +25,11 @@ type MonochromeDotsBackgroundProps = {
   style?: CSSProperties
 }
 
+type ParticleSystem = {
+  particles: THREE.Points
+  material: THREE.ShaderMaterial
+}
+
 const DEFAULT_COLORS = {
   start: "#14b8d2",
   mid: "#b066ec",
@@ -120,6 +125,15 @@ function clampMultiplier(value: number | undefined, fallback: number, min: numbe
   return Math.min(max, Math.max(min, value))
 }
 
+function disposeParticleSystems(scene: THREE.Scene, systems: ParticleSystem[]) {
+  systems.forEach((system) => {
+    system.material.uniforms.uTexture.value?.dispose()
+    system.particles.geometry.dispose()
+    system.material.dispose()
+    scene.remove(system.particles)
+  })
+}
+
 export function MonochromeDotsBackground({
   colors,
   speed = 1.5,
@@ -131,6 +145,8 @@ export function MonochromeDotsBackground({
   style,
 }: MonochromeDotsBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const particleSystemsRef = useRef<ParticleSystem[]>([])
+  const speedMultiplierRef = useRef(1.5)
 
   const resolvedColors = useMemo(
     () => ({
@@ -149,14 +165,50 @@ export function MonochromeDotsBackground({
     [direction?.x, direction?.y],
   )
 
-  useEffect(() => {
-    if (!canvasRef.current) return
+  const runtimeConfigRef = useRef({
+    colors: resolvedColors,
+    densityMultiplier: clampMultiplier(density, 1, 0.05, 3),
+    pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
+    opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
+    flowDirection,
+  })
 
+  runtimeConfigRef.current = {
+    colors: resolvedColors,
+    densityMultiplier: clampMultiplier(density, 1, 0.05, 3),
+    pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
+    opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
+    flowDirection,
+  }
+
+  useEffect(() => {
+    speedMultiplierRef.current = clampMultiplier(speed, 1.5, 0.05, 10)
+
+    particleSystemsRef.current.forEach((system) => {
+      const { colors: activeColors, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
+        runtimeConfigRef.current
+
+      system.material.uniforms.uColorStart.value.set(activeColors.start)
+      system.material.uniforms.uColorMid.value.set(activeColors.mid)
+      system.material.uniforms.uColorEnd.value.set(activeColors.end)
+      system.material.uniforms.uPointSizeMultiplier.value = pointSizeMultiplier
+      system.material.uniforms.uOpacityMultiplier.value = opacityMultiplier
+      system.material.uniforms.uFlowDirection.value.set(activeDirection.x, activeDirection.y)
+    })
+  }, [
+    resolvedColors.start,
+    resolvedColors.mid,
+    resolvedColors.end,
+    speed,
+    flowDirection.x,
+    flowDirection.y,
+    pointSize,
+    opacity,
+  ])
+
+  useEffect(() => {
     const canvas = canvasRef.current
-    const speedMultiplier = clampMultiplier(speed, 1.5, 0.05, 10)
-    const densityMultiplier = clampMultiplier(density, 1, 0.05, 3)
-    const pointSizeMultiplier = clampMultiplier(pointSize, 1, 0.2, 5)
-    const opacityMultiplier = clampMultiplier(opacity, 1, 0, 3)
+    if (!canvas) return
 
     let isVisible = true
     const handleVisibilityChange = () => {
@@ -181,105 +233,116 @@ export function MonochromeDotsBackground({
       preserveDrawingBuffer: false,
     })
 
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    const buildParticleSystems = () => {
+      disposeParticleSystems(scene, particleSystemsRef.current)
+      particleSystemsRef.current = []
 
-    const originX = -window.innerWidth / 2
-    const originY = window.innerHeight / 2
-    const maxDistance = Math.sqrt(
-      Math.pow(window.innerWidth / 2 - originX, 2) + Math.pow(-window.innerHeight / 2 - originY, 2),
-    )
+      const width = window.innerWidth
+      const height = window.innerHeight
+      const dpr = window.devicePixelRatio || 1
+      const { colors: activeColors, densityMultiplier, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
+        runtimeConfigRef.current
 
-    const isMobile = window.innerWidth < 768
-    const isLowPerformance = isMobile || window.devicePixelRatio < 2
-    const layers = isMobile
-      ? [
-          { spacing: 6, density: 0.6, layer: 0 },
-          { spacing: 10, density: 0.4, layer: 1 },
-        ]
-      : isLowPerformance
+      renderer.setPixelRatio(Math.min(dpr, 2))
+      renderer.setSize(width, height)
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+
+      const originX = -width / 2
+      const originY = height / 2
+      const maxDistance = Math.sqrt(Math.pow(width / 2 - originX, 2) + Math.pow(-height / 2 - originY, 2))
+
+      const isMobile = width < 768
+      const isLowPerformance = isMobile || dpr < 2
+      const layers = isMobile
         ? [
-            { spacing: 4, density: 0.8, layer: 0 },
-            { spacing: 6, density: 0.6, layer: 1 },
-            { spacing: 8, density: 0.4, layer: 2 },
+            { spacing: 6, density: 0.6, layer: 0 },
+            { spacing: 10, density: 0.4, layer: 1 },
           ]
-        : [
-            { spacing: 4, density: 0.9, layer: 0 },
-            { spacing: 6, density: 0.6, layer: 1 },
-            { spacing: 8, density: 0.4, layer: 2 },
-          ]
+        : isLowPerformance
+          ? [
+              { spacing: 4, density: 0.8, layer: 0 },
+              { spacing: 6, density: 0.6, layer: 1 },
+              { spacing: 8, density: 0.4, layer: 2 },
+            ]
+          : [
+              { spacing: 4, density: 0.9, layer: 0 },
+              { spacing: 6, density: 0.6, layer: 1 },
+              { spacing: 8, density: 0.4, layer: 2 },
+            ]
 
-    const colorStart = new THREE.Color(resolvedColors.start)
-    const colorMid = new THREE.Color(resolvedColors.mid)
-    const colorEnd = new THREE.Color(resolvedColors.end)
-    const particleSystems: { particles: THREE.Points; material: THREE.ShaderMaterial }[] = []
+      layers.forEach((config) => {
+        const buffer = 500
+        const cols = Math.ceil((width + buffer * 2) / config.spacing)
+        const rows = Math.ceil((height + buffer * 2) / config.spacing)
+        const particleCount = cols * rows
+        const keepProbability = Math.min(1, Math.max(0, config.density * densityMultiplier))
 
-    layers.forEach((config) => {
-      const buffer = 500
-      const cols = Math.ceil((window.innerWidth + buffer * 2) / config.spacing)
-      const rows = Math.ceil((window.innerHeight + buffer * 2) / config.spacing)
-      const particleCount = cols * rows
-      const keepProbability = Math.min(1, Math.max(0, config.density * densityMultiplier))
+        const positions = new Float32Array(particleCount * 3)
+        const delays = new Float32Array(particleCount)
+        const distances = new Float32Array(particleCount)
 
-      const positions = new Float32Array(particleCount * 3)
-      const delays = new Float32Array(particleCount)
-      const distances = new Float32Array(particleCount)
+        let index = 0
 
-      let index = 0
+        for (let i = 0; i < cols; i++) {
+          for (let j = 0; j < rows; j++) {
+            if (Math.random() > keepProbability) continue
 
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          if (Math.random() > keepProbability) continue
+            const x = i * config.spacing - width / 2 - buffer
+            const y = j * config.spacing - height / 2 - buffer
+            const z = config.layer * -10
 
-          const x = i * config.spacing - window.innerWidth / 2 - buffer
-          const y = j * config.spacing - window.innerHeight / 2 - buffer
-          const z = config.layer * -10
+            positions[index * 3] = x
+            positions[index * 3 + 1] = y
+            positions[index * 3 + 2] = z
 
-          positions[index * 3] = x
-          positions[index * 3 + 1] = y
-          positions[index * 3 + 2] = z
-
-          distances[index] = Math.sqrt(Math.pow(x - originX, 2) + Math.pow(y - originY, 2))
-          delays[index] = Math.random() * Math.PI * 0.5
-          index++
+            distances[index] = Math.sqrt(Math.pow(x - originX, 2) + Math.pow(y - originY, 2))
+            delays[index] = Math.random() * Math.PI * 0.5
+            index++
+          }
         }
+
+        const geometry = new THREE.BufferGeometry()
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions.slice(0, index * 3), 3))
+        geometry.setAttribute("delay", new THREE.BufferAttribute(delays.slice(0, index), 1))
+        geometry.setAttribute("distance", new THREE.BufferAttribute(distances.slice(0, index), 1))
+
+        const material = new THREE.ShaderMaterial({
+          vertexShader,
+          fragmentShader,
+          uniforms: {
+            uTime: { value: 0 },
+            uTexture: { value: createCircleTexture() },
+            uWaveLayer: { value: config.layer },
+            uMaxDistance: { value: maxDistance },
+            uPointSizeMultiplier: { value: pointSizeMultiplier },
+            uOpacityMultiplier: { value: opacityMultiplier },
+            uFlowDirection: { value: new THREE.Vector2(activeDirection.x, activeDirection.y) },
+            uColorStart: { value: new THREE.Color(activeColors.start) },
+            uColorMid: { value: new THREE.Color(activeColors.mid) },
+            uColorEnd: { value: new THREE.Color(activeColors.end) },
+          },
+          transparent: true,
+          blending: THREE.AdditiveBlending,
+          depthTest: false,
+          depthWrite: false,
+        })
+
+        const particles = new THREE.Points(geometry, material)
+        scene.add(particles)
+        particleSystemsRef.current.push({ particles, material })
+      })
+    }
+
+    buildParticleSystems()
+
+    let resizeFrameId = 0
+    const handleResize = () => {
+      if (resizeFrameId) {
+        cancelAnimationFrame(resizeFrameId)
       }
 
-      const geometry = new THREE.BufferGeometry()
-      geometry.setAttribute("position", new THREE.BufferAttribute(positions.slice(0, index * 3), 3))
-      geometry.setAttribute("delay", new THREE.BufferAttribute(delays.slice(0, index), 1))
-      geometry.setAttribute("distance", new THREE.BufferAttribute(distances.slice(0, index), 1))
-
-      const material = new THREE.ShaderMaterial({
-        vertexShader,
-        fragmentShader,
-        uniforms: {
-          uTime: { value: 0 },
-          uTexture: { value: createCircleTexture() },
-          uWaveLayer: { value: config.layer },
-          uMaxDistance: { value: maxDistance },
-          uPointSizeMultiplier: { value: pointSizeMultiplier },
-          uOpacityMultiplier: { value: opacityMultiplier },
-          uFlowDirection: { value: new THREE.Vector2(flowDirection.x, flowDirection.y) },
-          uColorStart: { value: colorStart },
-          uColorMid: { value: colorMid },
-          uColorEnd: { value: colorEnd },
-        },
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthTest: false,
-        depthWrite: false,
-      })
-
-      const particles = new THREE.Points(geometry, material)
-      scene.add(particles)
-      particleSystems.push({ particles, material })
-    })
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight
-      camera.updateProjectionMatrix()
-      renderer.setSize(window.innerWidth, window.innerHeight)
+      resizeFrameId = requestAnimationFrame(buildParticleSystems)
     }
 
     window.addEventListener("resize", handleResize)
@@ -298,8 +361,8 @@ export function MonochromeDotsBackground({
       lastFrameTime = currentTime
       const cappedDelta = Math.min(deltaTime, 0.1)
 
-      particleSystems.forEach((system) => {
-        system.material.uniforms.uTime.value += cappedDelta * speedMultiplier
+      particleSystemsRef.current.forEach((system) => {
+        system.material.uniforms.uTime.value += cappedDelta * speedMultiplierRef.current
       })
 
       renderer.render(scene, camera)
@@ -310,31 +373,19 @@ export function MonochromeDotsBackground({
     return () => {
       isAnimating = false
       cancelAnimationFrame(animationFrameId)
+      if (resizeFrameId) {
+        cancelAnimationFrame(resizeFrameId)
+      }
       window.removeEventListener("resize", handleResize)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
 
-      particleSystems.forEach((system) => {
-        system.material.uniforms.uTexture.value?.dispose()
-        system.particles.geometry.dispose()
-        system.material.dispose()
-        scene.remove(system.particles)
-      })
-
+      disposeParticleSystems(scene, particleSystemsRef.current)
+      particleSystemsRef.current = []
       renderer.renderLists.dispose()
       renderer.dispose()
       scene.clear()
     }
-  }, [
-    resolvedColors.start,
-    resolvedColors.mid,
-    resolvedColors.end,
-    speed,
-    flowDirection.x,
-    flowDirection.y,
-    density,
-    pointSize,
-    opacity,
-  ])
+  }, [density])
 
   return (
     <canvas

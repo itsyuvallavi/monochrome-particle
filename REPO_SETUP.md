@@ -14,11 +14,9 @@ npx skills add itsyuvallavi/monochrome-particle
 
 ## GitHub Pages
 
-1. Repository **Settings → Pages**
-2. Source: **Deploy from a branch**
-3. Branch: **main**, folder: **/docs**
+GitHub Pages is configured to deploy from the `main` branch and `/docs` folder.
 
-Site URL pattern:
+Site URL:
 
 [https://itsyuvallavi.github.io/monochrome-particle/](https://itsyuvallavi.github.io/monochrome-particle/)
 

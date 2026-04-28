@@ -121,6 +121,8 @@ const keepProbability = Math.min(1, Math.max(0, layer.density * config.density))
 
 Changing density should rebuild geometry because skipped particles are chosen during generation.
 
+Changing `colors`, `speed`, `direction`, `pointSize`, or `opacity` should update uniforms in place and should not recreate the renderer or particle geometry.
+
 ## Renderer Settings
 
 Use:
@@ -148,7 +150,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 
 - Skip rendering when `document.hidden` is true.
 - Use delta time and cap it around `0.1` seconds.
-- Update camera aspect and renderer size on resize.
+- Rebuild particle geometry on viewport resize so rows, columns, mobile/desktop layer tiers, and `uMaxDistance` match the new viewport.
 - Dispose generated textures, geometries, materials, render lists, and renderer on unmount.
 - Do not create a new Three.js object per particle.
 - Do not drive per-frame animation through React state.

@@ -52,16 +52,6 @@ mkdir -p ~/.cursor/skills
 cp -R skills/monochrome-particle ~/.cursor/skills/
 ```
 
-## Option C: `install.sh` from a clone
-
-```bash
-git clone https://github.com/itsyuvallavi/monochrome-particle.git
-cd monochrome-particle
-chmod +x install.sh
-./install.sh          # ~/.cursor/skills/monochrome-particle
-./install.sh project  # ./.cursor/skills/monochrome-particle
-```
-
 ## Verify
 
 In **Cursor**, reference `@.cursor/skills/monochrome-particle/SKILL.md` or ask the agent to follow the **Monochrome Particle** skill. In **other tools**, open the same files from wherever you installed them, or paste `SKILL.md` into the session so the model applies the customization contract.

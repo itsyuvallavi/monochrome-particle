@@ -71,6 +71,8 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 - Use distance from the top-left plane origin for the cyan/purple/pink-style gradient, but keep actual colors configurable through uniforms.
 - Animate with `requestAnimationFrame`, time deltas, and a capped delta to avoid jumps after tab inactivity.
 - Skip rendering while the tab is hidden.
+- Update common visual props (`colors`, `speed`, `direction`, `pointSize`, `opacity`) through refs/uniforms without recreating the WebGL renderer.
+- Rebuild particle geometry on density changes or viewport resize so particle count, mobile/desktop layer tiers, and `uMaxDistance` stay correct.
 - On cleanup, cancel rAF, remove listeners, dispose textures/geometries/materials/renderer, and clear the scene.
 
 ## Files To Read

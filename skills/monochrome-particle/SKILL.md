@@ -6,7 +6,7 @@ description: >-
   additive blending, and mobile/desktop density tiers. Use for Next.js/React
   canvas backgrounds, Three.js Points shaders, monochrome dots, particle wave,
   animated hero backdrop, or requests to change particle colors, speed,
-  direction, density, point size, or opacity. Portable Markdown instructions:
+  direction, density, point size, opacity, or camera zoom. Portable Markdown instructions:
   applies in any coding agent or IDE that loads SKILL.md (Cursor, Claude Code,
   OpenAI Codex, Google Gemini, Windsurf, JetBrains AI, Copilot Chat, VS
   Code–based agents, or paste into web UIs). Does NOT cover page transitions,
@@ -50,6 +50,7 @@ Required customization surface:
 - `density`: particle density multiplier; changing it rebuilds geometry
 - `pointSize`: point-size multiplier
 - `opacity`: alpha multiplier
+- `zoom`: orthographic “camera zoom” (`1` = fit drawable area; larger values zoom in / center crop). Update the frustum each frame or when this changes; no particle rebuild required.
 
 Prefer shader uniforms for runtime-safe visual changes:
 
@@ -75,7 +76,7 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 - Use distance from the top-left plane origin for the cyan/purple/pink-style gradient, but keep actual colors configurable through uniforms.
 - Animate with `requestAnimationFrame`, time deltas, and a capped delta to avoid jumps after tab inactivity.
 - Skip rendering while the tab is hidden.
-- Update common visual props (`colors`, `speed`, `direction`, `pointSize`, `opacity`) through refs/uniforms without recreating the WebGL renderer.
+- Update common visual props (`colors`, `speed`, `direction`, `pointSize`, `opacity`) through refs/uniforms without recreating the WebGL renderer. Update **`zoom`** by changing the orthographic frustum (same drawable width/height; divide half-extents by `zoom`), not by rebuilding points.
 - Rebuild particle geometry on density changes or whenever drawable size changes. Debounce rapid `ResizeObserver` callbacks with `requestAnimationFrame`. On first mount, run **two** nested `requestAnimationFrame` ticks before the first size-dependent build so `clientWidth` / `clientHeight` are not zero.
 - On cleanup, cancel rAF, disconnect `ResizeObserver`, remove listeners, dispose textures/geometries/materials/renderer, and clear the scene.
 
@@ -97,7 +98,7 @@ The repository root includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`** (camera/
 
 ## Verification
 
-- Changing `colors`, `speed`, `direction`, `density`, `pointSize`, or `opacity` produces the expected visual change.
+- Changing `colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`, or `zoom` produces the expected visual change.
 - Resize, rotation, mobile browser chrome show/hide, and tab hide/show work without console errors; no black pillarboxing when the painted area is wider than a lagging `innerWidth`.
 - Unmounting disposes textures, geometries, materials, and renderer resources.
 - **React StrictMode** double-mounting in development can surface fragile WebGL init; prefer idempotent setup/teardown (or disable StrictMode locally while debugging-only if needed).

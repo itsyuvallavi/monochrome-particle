@@ -60,9 +60,7 @@ The third argument **`false`** means: update the drawing buffer to those dimensi
 
 ## 4. Camera: orthographic, lockstep with grid
 
-Use **`THREE.OrthographicCamera`** and set `left` / `right` / `top` / `bottom` from the **same** `width`, `height`, and **`GRID_BUFFER`** used when placing particles (half-extents `width/2 + GRID_BUFFER`, `height/2 + GRID_BUFFER`). Particle positions must be built from the same values. If you change buffer or extent in one place, change both.
-
-## 5. When to rebuild
+Use **`THREE.OrthographicCamera`**. Set `left` / `right` / `top` / `bottom` from the drawable width/height and the same **`GRID_BUFFER`** used when placing particles (half-extents `width/2 + GRID_BUFFER`, `height/2 + GRID_BUFFER`). Particle positions must be built from the same width/height and buffer. Divide half-extents by **`zoom`** to zoom in (`> 1`) or out (`< 1`) without regenerating geometry.
 
 On any size change, rerun the routine that:
 

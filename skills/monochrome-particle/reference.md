@@ -9,7 +9,7 @@ These notes are **editor- and model-agnostic**: they apply whether the agent run
 ## Visual Model
 
 - A **full-bleed wrapper** owns layout: `position: fixed` (or equivalent), `inset: 0`, `100dvw` × `100dvh` (or `100vw`/`100vh`), no `max-width` shrink. The **canvas** is `position: absolute; inset: 0; width/height: 100%`, `display: block`, `max-width: none`, no margin/padding—so CSS controls the painted box and `renderer.setSize(..., false)` only sizes the drawing buffer.
-- **Camera:** `OrthographicCamera` frustum each rebuild: `left/right` = `±(drawableWidth/2 + buffer)`, `top/bottom` = `±(drawableHeight/2 + buffer)`—identical `buffer` to the particle grid. Avoids frustum vs grid mismatch (clipping / offset on resize).
+- **Camera:** `OrthographicCamera` frustum each rebuild: `left/right` = `±(drawableWidth/2 + buffer)`, `top/bottom` = `±(drawableHeight/2 + buffer)`—identical `buffer` to the particle grid. Optional **`zoom`**: divide those half-extents by `zoom` (greater than 1 = zoom in / center crop) without rebuilding points.
 - **Drawable size:** use `readDrawableCssSize(canvas)`: per axis, `Math.max` of `canvas.clientWidth`, `getBoundingClientRect()` size, `window.inner*`, `document.documentElement.client*`, and `visualViewport` when present—never size the buffer from `innerWidth` alone if the canvas can paint wider (pillarboxing).
 - **Portal:** optional `createPortal(..., document.body)` when `#root` is narrow or stacking is fragile; default in-tree is often easier for dev tooling.
 - Keep the wrapper in a non-negative stacking layer (`z-0`) and put app content above (`z-index` ≥ 1).
@@ -39,6 +39,7 @@ type ParticleBackgroundConfig = {
   density: number
   pointSize: number
   opacity: number
+  zoom: number
 }
 ```
 
@@ -56,6 +57,7 @@ const DEFAULT_CONFIG = {
   density: 1,
   pointSize: 1,
   opacity: 1,
+  zoom: 1,
 }
 ```
 
@@ -131,6 +133,8 @@ const keepProbability = Math.min(1, Math.max(0, layer.density * config.density))
 Changing density should rebuild geometry because skipped particles are chosen during generation.
 
 Changing `colors`, `speed`, `direction`, `pointSize`, or `opacity` should update uniforms in place and should not recreate the renderer or particle geometry.
+
+Changing **`zoom`** should only update the orthographic camera frustum (half-extents divided by zoom); do not rebuild particle geometry for zoom alone.
 
 ## Renderer Settings
 

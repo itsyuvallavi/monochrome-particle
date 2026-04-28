@@ -22,6 +22,8 @@ type MonochromeDotsBackgroundProps = {
   density?: number
   pointSize?: number
   opacity?: number
+  /** Orthographic zoom: `1` fits the drawable area; larger values zoom in (center crop). Clamped ~0.25–4. */
+  zoom?: number
   /** CSS classes on the full-bleed wrapper (layout box observed by ResizeObserver). */
   wrapperClassName?: string
   wrapperStyle?: CSSProperties
@@ -166,9 +168,15 @@ function readDrawableCssSize(canvas: HTMLCanvasElement): { width: number; height
   return { width: Math.round(width), height: Math.round(height) }
 }
 
-function updateOrthographicFrustum(camera: THREE.OrthographicCamera, width: number, height: number) {
-  const halfW = width / 2 + GRID_BUFFER
-  const halfH = height / 2 + GRID_BUFFER
+function updateOrthographicFrustum(
+  camera: THREE.OrthographicCamera,
+  width: number,
+  height: number,
+  zoom = 1,
+) {
+  const z = Math.max(0.25, Math.min(4, zoom))
+  const halfW = (width / 2 + GRID_BUFFER) / z
+  const halfH = (height / 2 + GRID_BUFFER) / z
   camera.left = -halfW
   camera.right = halfW
   camera.top = halfH
@@ -217,6 +225,7 @@ export function MonochromeDotsBackground({
   density = 1,
   pointSize = 1,
   opacity = 1,
+  zoom = 1,
   wrapperClassName,
   wrapperStyle,
   className,
@@ -261,8 +270,9 @@ export function MonochromeDotsBackground({
       pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
       opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
       flowDirection,
+      zoom: clampMultiplier(zoom, 1, 0.25, 4),
     }),
-    [density, flowDirection, opacity, pointSize, resolvedColors],
+    [density, flowDirection, opacity, pointSize, resolvedColors, zoom],
   )
 
   const runtimeConfigRef = useRef(runtimeConfig)
@@ -341,18 +351,21 @@ export function MonochromeDotsBackground({
       console.error("MonochromeDotsBackground: WebGL context unavailable")
     }
 
+    const drawableSizeRef = { current: { width: 0, height: 0 } }
+
     const buildParticleSystems = () => {
       disposeParticleSystems(scene, particleSystemsRef.current)
       particleSystemsRef.current = []
 
       const { width, height } = readDrawableCssSize(canvas)
+      drawableSizeRef.current = { width, height }
       const dpr = window.devicePixelRatio || 1
-      const { colors: activeColors, densityMultiplier, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
+      const { colors: activeColors, densityMultiplier, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection, zoom: activeZoom } =
         runtimeConfigRef.current
 
       renderer.setPixelRatio(Math.min(dpr, 2))
       renderer.setSize(width, height, false)
-      updateOrthographicFrustum(camera, width, height)
+      updateOrthographicFrustum(camera, width, height, activeZoom)
 
       const originX = -width / 2
       const originY = height / 2
@@ -493,6 +506,11 @@ export function MonochromeDotsBackground({
       particleSystemsRef.current.forEach((system) => {
         system.material.uniforms.uTime.value += cappedDelta * speedMultiplierRef.current
       })
+
+      const { width, height } = drawableSizeRef.current
+      if (width > 0 && height > 0) {
+        updateOrthographicFrustum(camera, width, height, runtimeConfigRef.current.zoom)
+      }
 
       renderer.render(scene, camera)
     }

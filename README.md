@@ -1,6 +1,6 @@
 # Monochrome Particle
 
-**[Website](https://itsyuvallavi.github.io/monochrome-particle/)** · **[Repository](https://github.com/itsyuvallavi/monochrome-particle)**
+**[Repository](https://github.com/itsyuvallavi/monochrome-particle)**
 
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-compatible-2dd4bf?style=flat-square)](https://github.com/vercel-labs/agent-skills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
@@ -20,7 +20,7 @@ npx skills add itsyuvallavi/monochrome-particle
 
 Or copy `skills/monochrome-particle/` into your project’s skills/rules folder, or open **`SKILL.md`** and paste it into ChatGPT / Codex / any agent session.
 
-Full options: [docs/INSTALL.md](docs/INSTALL.md)
+For CLI flags and install targets, run `npx skills add --help`, or see [Agent Skills](https://github.com/vercel-labs/agent-skills).
 
 ## Validate the example
 

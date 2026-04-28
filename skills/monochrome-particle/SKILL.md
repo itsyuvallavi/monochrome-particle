@@ -27,7 +27,7 @@ Tool-specific install mechanics may differ; the **implementation contract** (cus
 
 ## Scope
 
-Build a background-only React/Next.js component that owns a fixed full-viewport canvas, `WebGLRenderer`, layered `THREE.Points`, buffer geometry with `delay` and `particleDist` attributes (never name an attribute `distance`; it clashes with the GLSL builtin `distance()`), vertex + fragment shaders, circular sprite texture, animation loop, resize handling, visibility handling, and full WebGL cleanup.
+Build a background-only React/Next.js component that owns a fixed full-viewport canvas, `WebGLRenderer`, layered `THREE.Points`, buffer geometry with `delay` and `particleDist` attributes (never name an attribute `distance`; it clashes with the GLSL builtin `distance()`), vertex + fragment shaders, circular sprite texture, animation loop, resize handling, visibility handling, and full WebGL cleanup. Use an **orthographic** camera whose left/right/top/bottom match the particle grid bounds (viewport half-size plus the same edge buffer used for the grid) so the field always fills the drawable area without perspective frustum clipping (black side gutters).
 
 Do not implement or document these as part of this skill:
 
@@ -62,11 +62,13 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 
 ## Implementation Recipe
 
-- Use a `"use client"` React component with `useEffect` and `useRef`.
+- Use a `"use client"` React component with `useEffect` and `useRef` (Next.js App Router); in Vite or CRA you can omit the directive.
 - If you mirror props into a ref for the animation loop, derive the object with `useMemo` and assign `ref.current` inside `useEffect`. Do not write to `ref.current` during render — React 19’s ESLint plugin reports that as “Cannot access refs during render”.
 - Install `three` and `@types/three`.
-- Use `PerspectiveCamera(75, width / height, 0.1, 2000)` with `camera.position.z = 500`.
+- Use `OrthographicCamera` with `left`, `right`, `top`, `bottom` set each resize to `±(width/2 + buffer)` and `±(height/2 + buffer)` using the **same** `buffer` as the particle grid margin. Position the camera on +Z (e.g. 500) and `lookAt(0,0,0)`. Trade-off: no perspective foreshortening; the field looks slightly flatter than with a perspective camera.
+- For layout math (grid columns/rows, camera frustum, `setSize`), read **`window.innerWidth` / `window.innerHeight` only** — do not use `canvas.parentElement.clientWidth` when a shell might be narrower than the browser viewport (avoids a narrow grid + black gutters).
 - Use `WebGLRenderer` with `powerPreference: "high-performance"`, `alpha: false`, `depth: false`, `stencil: false`, and capped DPR (`Math.min(devicePixelRatio, 2)`).
+- Call `renderer.setSize(width, height, false)` so Three.js does not overwrite canvas CSS; drive full-screen layout with `position: fixed; inset: 0` (or equivalent).
 - Build 2 to 3 particle layers using `BufferGeometry`, `ShaderMaterial`, `THREE.Points`, and additive blending.
 - Generate a 32x32 radial-gradient canvas texture for soft circular particles.
 - Use distance from the top-left plane origin for the cyan/purple/pink-style gradient, but keep actual colors configurable through uniforms.
@@ -79,14 +81,18 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 ## Files To Read
 
 - Read `reference.md` for shader contracts, sizing, layers, and performance rules.
-- Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component with configurable colors, speed, direction, density, point size, and opacity.
+- Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component with configurable colors, speed, direction, density, point size, opacity, orthographic full-viewport layout, optional `document.body` portal, and viewport-based sizing.
+
+The repository root also includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`**, a human-readable note on gutters, camera, and sizing (not required for the Agent Skill payload if you only vendor `skills/monochrome-particle/`).
 
 ## Integration
 
 - Mount the component once near the app root.
-- Put the canvas in a fixed background layer, for example a wrapper with `fixed inset-0 z-0 pointer-events-none`.
-- Page content should sit above it with `relative z-10`.
+- Prefer `createPortal(<canvas />, document.body)` so a narrow `#root`, flex shell, or `max-width` wrapper does not break `fixed` stacking or confuse sizing vs the full viewport.
+- Put the canvas in a fixed full-viewport layer with `fixed inset-0 z-0 pointer-events-none` (class utilities or equivalent).
+- Page content (e.g. `#root`) should sit above the canvas with `position: relative; z-index: 1` or higher (`z-10` is fine).
 - Avoid negative z-index for the canvas unless the parent stacking context is carefully controlled; otherwise the body background can hide the WebGL output.
+- Listen to `window` `resize` and `window.visualViewport` `resize` when available so mobile URL bars and viewport changes rebuild the grid.
 - Keep the component independent from routes, buttons, and page transitions.
 
 ## Verification

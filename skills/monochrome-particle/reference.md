@@ -4,10 +4,15 @@ This reference describes the background-only effect. It intentionally excludes r
 
 These notes are **editor- and model-agnostic**: they apply whether the agent runs in Cursor, Claude Code, Codex, Gemini, Windsurf, JetBrains, Copilot, or a web chat, as long as the instructions are available to the model.
 
+**Parity:** If another codebase (e.g. a separate “playground” or portfolio file) uses different shaders, attribute names, or storm logic, it will not match this skill’s output even with similar colors—share one implementation or one package if you need identical visuals.
+
 ## Visual Model
 
 - A fixed full-viewport canvas sits behind page content.
-- Keep the canvas in a non-negative stacking layer (`z-0` or an equivalent wrapper) and put content above it. A negative z-index can place the canvas behind the body background and make the particles invisible.
+- **Camera:** use `OrthographicCamera` with frustum bounds matching the particle grid: each frame resize, set `left/right` to `±(innerWidth/2 + buffer)` and `top/bottom` to `±(innerHeight/2 + buffer)` (same `buffer` as the grid padding). This avoids perspective “frustum smaller than the grid” clipping (black side gutters / cropped look). Optional: `PerspectiveCamera` with a computed Z can reduce clipping but still does not give strict 1:1 world units to pixels.
+- **Sizing source:** use `window.innerWidth` and `window.innerHeight` for grid math, camera frustum, and `setSize`. Do not substitute `canvas.parentElement.clientWidth/Height` when any ancestor can be narrower than the viewport.
+- **Portal:** rendering the canvas with `createPortal(..., document.body)` avoids `#root` width clamps and some stacking-context quirks (`transform` / `filter` / `perspective` on ancestors affecting `fixed`).
+- Keep the canvas in a non-negative stacking layer (`z-0` or an equivalent wrapper) and put content above it (`z-index` ≥ 1). A negative z-index can place the canvas behind the body background and make the particles invisible.
 - The renderer owns a black `THREE.Scene`.
 - The particle field is made from multiple `THREE.Points` layers, not one mesh per dot.
 - Each layer uses `BufferGeometry` with:
@@ -145,11 +150,17 @@ new THREE.WebGLRenderer({
 Set:
 
 ```ts
-renderer.setSize(window.innerWidth, window.innerHeight)
+const w = window.innerWidth
+const h = window.innerHeight
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.setSize(w, h, false) // do not let Three overwrite canvas CSS; use fixed + inset for layout
 renderer.toneMapping = THREE.NoToneMapping
 renderer.outputColorSpace = THREE.SRGBColorSpace
 ```
+
+Add `powerPreference: "high-performance"` on the renderer where supported.
+
+On resize, listen to `window` and `window.visualViewport` (when defined) in addition to—or instead of—`ResizeObserver` on a narrow parent.
 
 ## Performance And Cleanup
 

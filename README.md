@@ -22,6 +22,8 @@ Or copy `skills/monochrome-particle/` into your project’s skills/rules folder,
 
 For CLI flags and install targets, run `npx skills add --help`, or see [Agent Skills](https://github.com/vercel-labs/agent-skills).
 
+**Layout / full viewport:** If particles show black side gutters, a “cropped” field, or wrong width, see [FULL_VIEWPORT_PARTICLE_BACKGROUND.md](FULL_VIEWPORT_PARTICLE_BACKGROUND.md) (camera, `setSize(..., false)`, portal, sizing source).
+
 ## Validate the example
 
 The repo includes a tiny TypeScript setup for checking the example component:

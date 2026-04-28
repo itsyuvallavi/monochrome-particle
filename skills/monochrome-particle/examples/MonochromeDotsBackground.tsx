@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useMemo, useRef, type CSSProperties } from "react"
+import { createPortal } from "react-dom"
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react"
 import * as THREE from "three"
 
 type ParticleColorStops = {
@@ -23,12 +24,21 @@ type MonochromeDotsBackgroundProps = {
   opacity?: number
   className?: string
   style?: CSSProperties
+  /**
+   * When true (default), the canvas is rendered with `createPortal` into `document.body`
+   * so a narrow `#root` or flex shell cannot clip `fixed` positioning or skew sizing.
+   * Set false to keep the canvas in the React tree (e.g. tests or special layouts).
+   */
+  useDocumentBodyPortal?: boolean
 }
 
 type ParticleSystem = {
   particles: THREE.Points
   material: THREE.ShaderMaterial
 }
+
+/** Padding around the viewport for the particle grid; must match ortho frustum half-extent. */
+const GRID_BUFFER = 500
 
 const DEFAULT_COLORS = {
   start: "#14b8d2",
@@ -45,7 +55,8 @@ const vertexShader = `
   uniform float uOpacityMultiplier;
   uniform vec2 uFlowDirection;
   attribute float delay;
-  attribute float distance;
+  /* distance() is a GLSL builtin — attribute must not be named distance */
+  attribute float particleDist;
   varying float vAlpha;
   varying float vDistanceRatio;
 
@@ -59,9 +70,9 @@ const vertexShader = `
     float layerFreq = 0.008 + uWaveLayer * 0.002;
 
     float wave1 = sin(directionalDistance * layerFreq - uTime * layerSpeed + delay);
-    float wave2 = sin(distance * (layerFreq * 1.5) - uTime * (layerSpeed * 1.2) + delay * 0.7);
+    float wave2 = sin(particleDist * (layerFreq * 1.5) - uTime * (layerSpeed * 1.2) + delay * 0.7);
     float wave3 = sin(directionalDistance * (layerFreq * 0.6) - uTime * (layerSpeed * 0.8) + delay * 1.3);
-    float wave4 = cos(distance * (layerFreq * 1.8) - uTime * (layerSpeed * 0.7) + delay * 0.3);
+    float wave4 = cos(particleDist * (layerFreq * 1.8) - uTime * (layerSpeed * 0.7) + delay * 0.3);
 
     float pulse = wave1 * 0.4 + wave2 * 0.3 + wave3 * 0.2 + wave4 * 0.1;
 
@@ -71,7 +82,7 @@ const vertexShader = `
 
     float baseAlpha = 0.35 + uWaveLayer * 0.07;
     vAlpha = (baseAlpha + (pulse + 1.5) * baseAlpha * 0.55) * uOpacityMultiplier;
-    vDistanceRatio = clamp(distance / uMaxDistance, 0.0, 1.0);
+    vDistanceRatio = clamp(particleDist / uMaxDistance, 0.0, 1.0);
 
     gl_Position = projectionMatrix * mvPosition;
   }
@@ -99,6 +110,23 @@ const fragmentShader = `
     gl_FragColor = vec4(gradientColor, vAlpha) * textureColor;
   }
 `
+
+function readViewportPixelSize(): { width: number; height: number } {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+}
+
+function updateOrthographicFrustum(camera: THREE.OrthographicCamera, width: number, height: number) {
+  const halfW = width / 2 + GRID_BUFFER
+  const halfH = height / 2 + GRID_BUFFER
+  camera.left = -halfW
+  camera.right = halfW
+  camera.top = halfH
+  camera.bottom = -halfH
+  camera.updateProjectionMatrix()
+}
 
 function createCircleTexture() {
   const textureCanvas = document.createElement("canvas")
@@ -141,12 +169,22 @@ export function MonochromeDotsBackground({
   density = 1,
   pointSize = 1,
   opacity = 1,
-  className = "fixed inset-0 h-full w-full -z-10",
+  className = "fixed inset-0 z-0 h-full w-full pointer-events-none",
   style,
+  useDocumentBodyPortal = true,
 }: MonochromeDotsBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particleSystemsRef = useRef<ParticleSystem[]>([])
   const speedMultiplierRef = useRef(1.5)
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    if (!useDocumentBodyPortal) {
+      setPortalTarget(null)
+      return
+    }
+    setPortalTarget(document.body)
+  }, [useDocumentBodyPortal])
 
   const resolvedColors = useMemo(
     () => ({
@@ -165,28 +203,29 @@ export function MonochromeDotsBackground({
     [direction?.x, direction?.y],
   )
 
-  const runtimeConfigRef = useRef({
-    colors: resolvedColors,
-    densityMultiplier: clampMultiplier(density, 1, 0.05, 3),
-    pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
-    opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
-    flowDirection,
-  })
+  const runtimeConfig = useMemo(
+    () => ({
+      colors: resolvedColors,
+      densityMultiplier: clampMultiplier(density, 1, 0.05, 3),
+      pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
+      opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
+      flowDirection,
+    }),
+    [density, flowDirection, opacity, pointSize, resolvedColors],
+  )
 
-  runtimeConfigRef.current = {
-    colors: resolvedColors,
-    densityMultiplier: clampMultiplier(density, 1, 0.05, 3),
-    pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
-    opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
-    flowDirection,
-  }
+  const runtimeConfigRef = useRef(runtimeConfig)
+
+  useEffect(() => {
+    runtimeConfigRef.current = runtimeConfig
+  }, [runtimeConfig])
 
   useEffect(() => {
     speedMultiplierRef.current = clampMultiplier(speed, 1.5, 0.05, 10)
 
     particleSystemsRef.current.forEach((system) => {
       const { colors: activeColors, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
-        runtimeConfigRef.current
+        runtimeConfig
 
       system.material.uniforms.uColorStart.value.set(activeColors.start)
       system.material.uniforms.uColorMid.value.set(activeColors.mid)
@@ -196,17 +235,15 @@ export function MonochromeDotsBackground({
       system.material.uniforms.uFlowDirection.value.set(activeDirection.x, activeDirection.y)
     })
   }, [
-    resolvedColors.start,
-    resolvedColors.mid,
-    resolvedColors.end,
     speed,
-    flowDirection.x,
-    flowDirection.y,
-    pointSize,
-    opacity,
+    runtimeConfig,
   ])
 
+  const portalReady = useDocumentBodyPortal ? portalTarget !== null : true
+
   useEffect(() => {
+    if (!portalReady) return
+
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -220,33 +257,41 @@ export function MonochromeDotsBackground({
     const scene = new THREE.Scene()
     scene.background = new THREE.Color(0x000000)
 
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000)
-    camera.position.z = 500
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000)
+    camera.position.set(0, 0, 500)
+    camera.lookAt(0, 0, 0)
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      powerPreference: "high-performance",
       alpha: false,
       stencil: false,
       depth: false,
       preserveDrawingBuffer: false,
+      failIfMajorPerformanceCaveat: false,
+      powerPreference: "high-performance",
     })
+
+    renderer.toneMapping = THREE.NoToneMapping
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+
+    const gl = renderer.getContext()
+    if (!gl || gl.isContextLost?.()) {
+      console.error("MonochromeDotsBackground: WebGL context unavailable")
+    }
 
     const buildParticleSystems = () => {
       disposeParticleSystems(scene, particleSystemsRef.current)
       particleSystemsRef.current = []
 
-      const width = window.innerWidth
-      const height = window.innerHeight
+      const { width, height } = readViewportPixelSize()
       const dpr = window.devicePixelRatio || 1
       const { colors: activeColors, densityMultiplier, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
         runtimeConfigRef.current
 
       renderer.setPixelRatio(Math.min(dpr, 2))
-      renderer.setSize(width, height)
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
+      renderer.setSize(width, height, false)
+      updateOrthographicFrustum(camera, width, height)
 
       const originX = -width / 2
       const originY = height / 2
@@ -272,9 +317,8 @@ export function MonochromeDotsBackground({
             ]
 
       layers.forEach((config) => {
-        const buffer = 500
-        const cols = Math.ceil((width + buffer * 2) / config.spacing)
-        const rows = Math.ceil((height + buffer * 2) / config.spacing)
+        const cols = Math.ceil((width + GRID_BUFFER * 2) / config.spacing)
+        const rows = Math.ceil((height + GRID_BUFFER * 2) / config.spacing)
         const particleCount = cols * rows
         const keepProbability = Math.min(1, Math.max(0, config.density * densityMultiplier))
 
@@ -288,8 +332,8 @@ export function MonochromeDotsBackground({
           for (let j = 0; j < rows; j++) {
             if (Math.random() > keepProbability) continue
 
-            const x = i * config.spacing - width / 2 - buffer
-            const y = j * config.spacing - height / 2 - buffer
+            const x = i * config.spacing - width / 2 - GRID_BUFFER
+            const y = j * config.spacing - height / 2 - GRID_BUFFER
             const z = config.layer * -10
 
             positions[index * 3] = x
@@ -305,7 +349,7 @@ export function MonochromeDotsBackground({
         const geometry = new THREE.BufferGeometry()
         geometry.setAttribute("position", new THREE.BufferAttribute(positions.slice(0, index * 3), 3))
         geometry.setAttribute("delay", new THREE.BufferAttribute(delays.slice(0, index), 1))
-        geometry.setAttribute("distance", new THREE.BufferAttribute(distances.slice(0, index), 1))
+        geometry.setAttribute("particleDist", new THREE.BufferAttribute(distances.slice(0, index), 1))
 
         const material = new THREE.ShaderMaterial({
           vertexShader,
@@ -335,6 +379,7 @@ export function MonochromeDotsBackground({
     }
 
     buildParticleSystems()
+    renderer.render(scene, camera)
 
     let resizeFrameId = 0
     const handleResize = () => {
@@ -346,6 +391,8 @@ export function MonochromeDotsBackground({
     }
 
     window.addEventListener("resize", handleResize)
+    const visualViewport = window.visualViewport
+    visualViewport?.addEventListener("resize", handleResize)
 
     let animationFrameId = 0
     let lastFrameTime = performance.now()
@@ -377,6 +424,7 @@ export function MonochromeDotsBackground({
         cancelAnimationFrame(resizeFrameId)
       }
       window.removeEventListener("resize", handleResize)
+      visualViewport?.removeEventListener("resize", handleResize)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
 
       disposeParticleSystems(scene, particleSystemsRef.current)
@@ -385,19 +433,20 @@ export function MonochromeDotsBackground({
       renderer.dispose()
       scene.clear()
     }
-  }, [density])
+  }, [density, portalReady, useDocumentBodyPortal])
 
-  return (
+  const canvas = (
     <canvas
       ref={canvasRef}
       className={className}
-      style={{
-        willChange: "transform",
-        transform: "translateZ(0)",
-        backfaceVisibility: "hidden",
-        perspective: 2000,
-        ...style,
-      }}
+      style={style}
     />
   )
+
+  if (useDocumentBodyPortal) {
+    if (!portalTarget) return null
+    return createPortal(canvas, portalTarget)
+  }
+
+  return canvas
 }

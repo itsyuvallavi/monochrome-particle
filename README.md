@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/itsyuvallavi/monochrome-particle?style=flat-square&color=yellow)](https://github.com/itsyuvallavi/monochrome-particle/stargazers)
 
-Portable **Agent Skills** for a configurable, full-viewport **Three.js** particle wave: layered `Points`, GLSL waves, soft circular sprites, additive blending, and sensible mobile/desktop density. The model gets clear knobs for **colors, speed, direction, density, point size, and opacity** instead of hunting shader constants.
+Portable **Agent Skills** for a configurable, full-viewport **Three.js** particle wave: layered `Points`, GLSL waves, soft circular sprites, additive blending, and sensible mobile/desktop density. The model gets clear knobs for **colors, speed, direction, density, point size, opacity,** and optional **orthographic zoom** instead of hunting shader constants.
 
 **Background only** — no route transitions, no “storm” providers, no CTA wiring. Works anywhere the instructions reach the model (Cursor, Claude Code, Codex, Windsurf, Copilot, Gemini-capable clients, JetBrains AI, VS Code–based agents, or paste into a web chat).
 
@@ -33,11 +33,17 @@ npm install
 npm run typecheck
 ```
 
+Example: orthographic zoom (frustum only; no geometry rebuild):
+
+```tsx
+<MonochromeDotsBackground zoom={1.25} />
+```
+
 ## Skills
 
 | Skill | Description |
 | --- | --- |
-| **monochrome-particle** | Full-viewport Three.js monochrome particle field with a prop-driven customization contract (`colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`). Includes `reference.md` and `examples/MonochromeDotsBackground.tsx`. |
+| **monochrome-particle** | Full-viewport Three.js monochrome particle field with a prop-driven contract (`colors`, `speed`, `direction`, `density`, `pointSize`, `opacity`, `zoom`). Includes `reference.md` and `examples/MonochromeDotsBackground.tsx`. |
 
 ## Feedback & contributions
 

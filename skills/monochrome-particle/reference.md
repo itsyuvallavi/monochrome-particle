@@ -7,12 +7,13 @@ These notes are **editor- and model-agnostic**: they apply whether the agent run
 ## Visual Model
 
 - A fixed full-viewport canvas sits behind page content.
+- Keep the canvas in a non-negative stacking layer (`z-0` or an equivalent wrapper) and put content above it. A negative z-index can place the canvas behind the body background and make the particles invisible.
 - The renderer owns a black `THREE.Scene`.
 - The particle field is made from multiple `THREE.Points` layers, not one mesh per dot.
 - Each layer uses `BufferGeometry` with:
   - `position`: particle position in screen-like plane space
   - `delay`: random phase offset for organic wave variation
-  - `distance`: distance from the top-left plane origin, used for gradient placement
+  - `particleDist`: distance from the top-left plane origin, used for gradient placement (never name this attribute `distance`; it collides with the GLSL builtin)
 - A small generated canvas texture creates soft circular dots.
 - `THREE.AdditiveBlending` creates subtle glow where particles overlap.
 
@@ -73,8 +74,10 @@ Use attributes for per-particle variation:
 
 ```glsl
 attribute float delay;
-attribute float distance;
+attribute float particleDist;
 ```
+
+(Do not name the second attribute `distance`: in GLSL ES, `distance()` is a builtin and that name breaks shader compilation on many drivers.)
 
 The vertex shader should:
 
@@ -131,11 +134,11 @@ Use:
 new THREE.WebGLRenderer({
   canvas,
   antialias: true,
-  powerPreference: "high-performance",
   alpha: false,
   stencil: false,
   depth: false,
   preserveDrawingBuffer: false,
+  failIfMajorPerformanceCaveat: false,
 })
 ```
 
@@ -144,6 +147,8 @@ Set:
 ```ts
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+renderer.toneMapping = THREE.NoToneMapping
+renderer.outputColorSpace = THREE.SRGBColorSpace
 ```
 
 ## Performance And Cleanup
@@ -154,6 +159,16 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 - Dispose generated textures, geometries, materials, render lists, and renderer on unmount.
 - Do not create a new Three.js object per particle.
 - Do not drive per-frame animation through React state.
+
+## Tuning brightness
+
+Additive blending can look dim on some displays. Prefer props before editing shader constants, for example:
+
+```tsx
+<MonochromeDotsBackground density={1.15} pointSize={1.2} opacity={1.55} />
+```
+
+(`opacity` above `1` is allowed when your component clamps a sensible max, as in the example.)
 
 ## Forbidden Additions
 

@@ -27,7 +27,7 @@ Tool-specific install mechanics may differ; the **implementation contract** (cus
 
 ## Scope
 
-Build a background-only React/Next.js component that owns a fixed full-viewport canvas, `WebGLRenderer`, layered `THREE.Points`, buffer geometry with `delay` and `distance` attributes, vertex + fragment shaders, circular sprite texture, animation loop, resize handling, visibility handling, and full WebGL cleanup.
+Build a background-only React/Next.js component that owns a fixed full-viewport canvas, `WebGLRenderer`, layered `THREE.Points`, buffer geometry with `delay` and `particleDist` attributes (never name an attribute `distance`; it clashes with the GLSL builtin `distance()`), vertex + fragment shaders, circular sprite texture, animation loop, resize handling, visibility handling, and full WebGL cleanup.
 
 Do not implement or document these as part of this skill:
 
@@ -63,6 +63,7 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 ## Implementation Recipe
 
 - Use a `"use client"` React component with `useEffect` and `useRef`.
+- If you mirror props into a ref for the animation loop, derive the object with `useMemo` and assign `ref.current` inside `useEffect`. Do not write to `ref.current` during render — React 19’s ESLint plugin reports that as “Cannot access refs during render”.
 - Install `three` and `@types/three`.
 - Use `PerspectiveCamera(75, width / height, 0.1, 2000)` with `camera.position.z = 500`.
 - Use `WebGLRenderer` with `powerPreference: "high-performance"`, `alpha: false`, `depth: false`, `stencil: false`, and capped DPR (`Math.min(devicePixelRatio, 2)`).
@@ -83,8 +84,9 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 ## Integration
 
 - Mount the component once near the app root.
-- Canvas should be `fixed inset-0 h-full w-full -z-10`.
+- Put the canvas in a fixed background layer, for example a wrapper with `fixed inset-0 z-0 pointer-events-none`.
 - Page content should sit above it with `relative z-10`.
+- Avoid negative z-index for the canvas unless the parent stacking context is carefully controlled; otherwise the body background can hide the WebGL output.
 - Keep the component independent from routes, buttons, and page transitions.
 
 ## Verification

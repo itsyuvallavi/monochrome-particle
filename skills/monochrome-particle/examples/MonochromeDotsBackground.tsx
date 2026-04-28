@@ -22,12 +22,15 @@ type MonochromeDotsBackgroundProps = {
   density?: number
   pointSize?: number
   opacity?: number
+  /** CSS classes on the full-bleed wrapper (layout box observed by ResizeObserver). */
+  wrapperClassName?: string
+  wrapperStyle?: CSSProperties
+  /** CSS classes on the canvas (absolutely inset inside the wrapper). */
   className?: string
   style?: CSSProperties
   /**
-   * When true (default), the canvas is rendered with `createPortal` into `document.body`
-   * so a narrow `#root` or flex shell cannot clip `fixed` positioning or skew sizing.
-   * Set false to keep the canvas in the React tree (e.g. tests or special layouts).
+   * Opt-in: render the full wrapper via `createPortal` into `document.body` when `#root` is
+   * narrow or `fixed` stacking is unreliable. Default is in-tree for predictable layout/refs (e.g. Vite dev).
    */
   useDocumentBodyPortal?: boolean
 }
@@ -37,8 +40,31 @@ type ParticleSystem = {
   material: THREE.ShaderMaterial
 }
 
-/** Padding around the viewport for the particle grid; must match ortho frustum half-extent. */
+/** Padding around the drawable rect for the particle grid; must match ortho frustum half-extent. */
 const GRID_BUFFER = 500
+
+const DEFAULT_WRAPPER_STYLE: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  width: "100dvw",
+  height: "100dvh",
+  maxWidth: "none",
+  margin: 0,
+  padding: 0,
+  zIndex: 0,
+  pointerEvents: "none",
+}
+
+const DEFAULT_CANVAS_STYLE: CSSProperties = {
+  position: "absolute",
+  inset: 0,
+  width: "100%",
+  height: "100%",
+  display: "block",
+  maxWidth: "none",
+  margin: 0,
+  padding: 0,
+}
 
 const DEFAULT_COLORS = {
   start: "#14b8d2",
@@ -111,11 +137,33 @@ const fragmentShader = `
   }
 `
 
-function readViewportPixelSize(): { width: number; height: number } {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  }
+/**
+ * Single source for CSS pixel width/height: never allocate a buffer narrower than the painted layout
+ * when `innerWidth` lags or the canvas fills more than the layout box reports on first frame.
+ */
+function readDrawableCssSize(canvas: HTMLCanvasElement): { width: number; height: number } {
+  const rect = canvas.getBoundingClientRect()
+  const vv = window.visualViewport
+  const docEl = document.documentElement
+
+  const width = Math.max(
+    canvas.clientWidth,
+    rect.width,
+    window.innerWidth,
+    docEl.clientWidth,
+    vv?.width ?? 0,
+    1,
+  )
+  const height = Math.max(
+    canvas.clientHeight,
+    rect.height,
+    window.innerHeight,
+    docEl.clientHeight,
+    vv?.height ?? 0,
+    1,
+  )
+
+  return { width: Math.round(width), height: Math.round(height) }
 }
 
 function updateOrthographicFrustum(camera: THREE.OrthographicCamera, width: number, height: number) {
@@ -169,10 +217,13 @@ export function MonochromeDotsBackground({
   density = 1,
   pointSize = 1,
   opacity = 1,
-  className = "fixed inset-0 z-0 h-full w-full pointer-events-none",
+  wrapperClassName,
+  wrapperStyle,
+  className,
   style,
-  useDocumentBodyPortal = true,
+  useDocumentBodyPortal = false,
 }: MonochromeDotsBackgroundProps) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particleSystemsRef = useRef<ParticleSystem[]>([])
   const speedMultiplierRef = useRef(1.5)
@@ -241,6 +292,16 @@ export function MonochromeDotsBackground({
 
   const portalReady = useDocumentBodyPortal ? portalTarget !== null : true
 
+  const mergedWrapperStyle = useMemo(
+    () => ({ ...DEFAULT_WRAPPER_STYLE, ...wrapperStyle }),
+    [wrapperStyle],
+  )
+
+  const mergedCanvasStyle = useMemo(
+    () => ({ ...DEFAULT_CANVAS_STYLE, ...style }),
+    [style],
+  )
+
   useEffect(() => {
     if (!portalReady) return
 
@@ -284,7 +345,7 @@ export function MonochromeDotsBackground({
       disposeParticleSystems(scene, particleSystemsRef.current)
       particleSystemsRef.current = []
 
-      const { width, height } = readViewportPixelSize()
+      const { width, height } = readDrawableCssSize(canvas)
       const dpr = window.devicePixelRatio || 1
       const { colors: activeColors, densityMultiplier, pointSizeMultiplier, opacityMultiplier, flowDirection: activeDirection } =
         runtimeConfigRef.current
@@ -373,26 +434,47 @@ export function MonochromeDotsBackground({
         })
 
         const particles = new THREE.Points(geometry, material)
+        particles.frustumCulled = false
         scene.add(particles)
         particleSystemsRef.current.push({ particles, material })
       })
     }
 
-    buildParticleSystems()
-    renderer.render(scene, camera)
-
     let resizeFrameId = 0
-    const handleResize = () => {
+
+    const scheduleRebuild = () => {
       if (resizeFrameId) {
         cancelAnimationFrame(resizeFrameId)
       }
-
-      resizeFrameId = requestAnimationFrame(buildParticleSystems)
+      resizeFrameId = requestAnimationFrame(() => {
+        buildParticleSystems()
+        renderer.render(scene, camera)
+      })
     }
+
+    const handleResize = () => {
+      scheduleRebuild()
+    }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        buildParticleSystems()
+        renderer.render(scene, camera)
+      })
+    })
 
     window.addEventListener("resize", handleResize)
     const visualViewport = window.visualViewport
     visualViewport?.addEventListener("resize", handleResize)
+
+    const wrapper = wrapperRef.current
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => scheduleRebuild())
+        : null
+    resizeObserver?.observe(canvas)
+    if (wrapper) resizeObserver?.observe(wrapper)
+    resizeObserver?.observe(document.documentElement)
 
     let animationFrameId = 0
     let lastFrameTime = performance.now()
@@ -425,6 +507,7 @@ export function MonochromeDotsBackground({
       }
       window.removeEventListener("resize", handleResize)
       visualViewport?.removeEventListener("resize", handleResize)
+      resizeObserver?.disconnect()
       document.removeEventListener("visibilitychange", handleVisibilityChange)
 
       disposeParticleSystems(scene, particleSystemsRef.current)
@@ -435,18 +518,16 @@ export function MonochromeDotsBackground({
     }
   }, [density, portalReady, useDocumentBodyPortal])
 
-  const canvas = (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      style={style}
-    />
+  const tree = (
+    <div ref={wrapperRef} className={wrapperClassName} style={mergedWrapperStyle}>
+      <canvas ref={canvasRef} className={className} style={mergedCanvasStyle} />
+    </div>
   )
 
   if (useDocumentBodyPortal) {
     if (!portalTarget) return null
-    return createPortal(canvas, portalTarget)
+    return createPortal(tree, portalTarget)
   }
 
-  return canvas
+  return tree
 }

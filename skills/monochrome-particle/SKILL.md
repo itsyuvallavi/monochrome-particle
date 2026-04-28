@@ -65,39 +65,40 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 - Use a `"use client"` React component with `useEffect` and `useRef` (Next.js App Router); in Vite or CRA you can omit the directive.
 - If you mirror props into a ref for the animation loop, derive the object with `useMemo` and assign `ref.current` inside `useEffect`. Do not write to `ref.current` during render — React 19’s ESLint plugin reports that as “Cannot access refs during render”.
 - Install `three` and `@types/three`.
-- Use `OrthographicCamera` with `left`, `right`, `top`, `bottom` set each resize to `±(width/2 + buffer)` and `±(height/2 + buffer)` using the **same** `buffer` as the particle grid margin. Position the camera on +Z (e.g. 500) and `lookAt(0,0,0)`. Trade-off: no perspective foreshortening; the field looks slightly flatter than with a perspective camera.
-- For layout math (grid columns/rows, camera frustum, `setSize`), read **`window.innerWidth` / `window.innerHeight` only** — do not use `canvas.parentElement.clientWidth` when a shell might be narrower than the browser viewport (avoids a narrow grid + black gutters).
+- Use `OrthographicCamera` with `left`, `right`, `top`, `bottom` set each rebuild to `±(width/2 + buffer)` and `±(height/2 + buffer)` using the **same** `buffer` as the particle grid margin. Position the camera on +Z (e.g. 500) and `lookAt(0,0,0)`. Trade-off: no perspective foreshortening; the field looks slightly flatter than with a perspective camera.
+- **Drawable CSS size:** implement `readDrawableCssSize(canvas)` and use its `width`/`height` for grid math, orthographic frustum updates, and `renderer.setSize`. Take the **maximum** (per axis) of: `canvas.clientWidth`, `getBoundingClientRect()` width/height, `window.innerWidth`/`innerHeight`, `document.documentElement.clientWidth`/`clientHeight`, and `visualViewport` width/height when defined—so the buffer is never narrower than the painted layout when `innerWidth` lags split sidebars, mobile chrome, or first paint.
+- Wrap the canvas in a **full-bleed** layout box: e.g. `position: fixed; inset: 0; width: 100dvw; height: 100dvh` (or equivalent), and make the canvas `position: absolute; inset: 0; width/height: 100%; display: block; max-width: none; margin: 0; padding: 0`. Layout owns display size; the renderer must **not** use `setSize(..., true)` (do not let Three.js set inline canvas dimensions that fight CSS).
 - Use `WebGLRenderer` with `powerPreference: "high-performance"`, `alpha: false`, `depth: false`, `stencil: false`, and capped DPR (`Math.min(devicePixelRatio, 2)`).
-- Call `renderer.setSize(width, height, false)` so Three.js does not overwrite canvas CSS; drive full-screen layout with `position: fixed; inset: 0` (or equivalent).
-- Build 2 to 3 particle layers using `BufferGeometry`, `ShaderMaterial`, `THREE.Points`, and additive blending.
+- Call `renderer.setSize(width, height, false)` where `width`/`height` come from `readDrawableCssSize(canvas)`.
+- Build 2 to 3 particle layers using `BufferGeometry`, `ShaderMaterial`, `THREE.Points`, and additive blending. Set `points.frustumCulled = false` so large `gl_PointSize` does not disappear at the frustum edge.
 - Generate a 32x32 radial-gradient canvas texture for soft circular particles.
 - Use distance from the top-left plane origin for the cyan/purple/pink-style gradient, but keep actual colors configurable through uniforms.
 - Animate with `requestAnimationFrame`, time deltas, and a capped delta to avoid jumps after tab inactivity.
 - Skip rendering while the tab is hidden.
 - Update common visual props (`colors`, `speed`, `direction`, `pointSize`, `opacity`) through refs/uniforms without recreating the WebGL renderer.
-- Rebuild particle geometry on density changes or viewport resize so particle count, mobile/desktop layer tiers, and `uMaxDistance` stay correct.
-- On cleanup, cancel rAF, remove listeners, dispose textures/geometries/materials/renderer, and clear the scene.
+- Rebuild particle geometry on density changes or whenever drawable size changes. Debounce rapid `ResizeObserver` callbacks with `requestAnimationFrame`. On first mount, run **two** nested `requestAnimationFrame` ticks before the first size-dependent build so `clientWidth` / `clientHeight` are not zero.
+- On cleanup, cancel rAF, disconnect `ResizeObserver`, remove listeners, dispose textures/geometries/materials/renderer, and clear the scene.
 
 ## Files To Read
 
 - Read `reference.md` for shader contracts, sizing, layers, and performance rules.
-- Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component with configurable colors, speed, direction, density, point size, opacity, orthographic full-viewport layout, optional `document.body` portal, and viewport-based sizing.
+- Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component: full-bleed wrapper + canvas, `readDrawableCssSize`, orthographic camera, `setSize(..., false)`, `ResizeObserver` + `window` + `visualViewport`, optional `document.body` portal, and prop-driven customization.
 
-The repository root also includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`**, a human-readable note on gutters, camera, and sizing (not required for the Agent Skill payload if you only vendor `skills/monochrome-particle/`).
+The repository root includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`** (camera/gutters) and **`FULL_BLEED_CANVAS.md`** (CSS + drawable size + resize). Not part of the Agent Skill folder if you only vendor `skills/monochrome-particle/`.
 
 ## Integration
 
-- Mount the component once near the app root.
-- Prefer `createPortal(<canvas />, document.body)` so a narrow `#root`, flex shell, or `max-width` wrapper does not break `fixed` stacking or confuse sizing vs the full viewport.
-- Put the canvas in a fixed full-viewport layer with `fixed inset-0 z-0 pointer-events-none` (class utilities or equivalent).
-- Page content (e.g. `#root`) should sit above the canvas with `position: relative; z-index: 1` or higher (`z-10` is fine).
-- Avoid negative z-index for the canvas unless the parent stacking context is carefully controlled; otherwise the body background can hide the WebGL output.
-- Listen to `window` `resize` and `window.visualViewport` `resize` when available so mobile URL bars and viewport changes rebuild the grid.
+- Mount the component once near the app root. Ensure `#root` (or your app shell) is **full width** or sits **above** the background with `position: relative; z-index: 1+` so a narrow `max-width` on `#root` does not crop the **wrapper** if the background stays in-tree.
+- **Default:** keep the background **in the React tree** (no portal) for predictable refs and Vite/CSR dev; **opt in** to `createPortal(..., document.body)` only when `#root` is narrow or `fixed` stacking is unreliable.
+- The example uses an inline-style full-bleed **wrapper** (`100dvw` / `100dvh`, `fixed`, `inset: 0`) and an absolutely inset **canvas** at `100%`×`100%`.
+- Avoid negative z-index on the wrapper unless the stacking context is controlled; otherwise the body background can hide WebGL.
+- Wire resize to **`window`**, **`visualViewport`** (if defined), and **`ResizeObserver`** on the canvas, wrapper, and optionally `document.documentElement`; coalesce with `requestAnimationFrame`.
 - Keep the component independent from routes, buttons, and page transitions.
 
 ## Verification
 
 - Changing `colors`, `speed`, `direction`, `density`, `pointSize`, or `opacity` produces the expected visual change.
-- Resize and tab hide/show work without console errors.
+- Resize, rotation, mobile browser chrome show/hide, and tab hide/show work without console errors; no black pillarboxing when the painted area is wider than a lagging `innerWidth`.
 - Unmounting disposes textures, geometries, materials, and renderer resources.
+- **React StrictMode** double-mounting in development can surface fragile WebGL init; prefer idempotent setup/teardown (or disable StrictMode locally while debugging-only if needed).
 - No references to sandstorm, route transitions, or CTA-triggered navigation are introduced.

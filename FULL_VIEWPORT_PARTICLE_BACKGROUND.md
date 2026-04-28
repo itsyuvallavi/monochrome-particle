@@ -44,11 +44,12 @@ Then:
 
 while the page background or user expectation was full viewport → **black gutters** (no particles drawn in those pixel columns).
 
-**Fix in this repo:**
+**Fix in this repo (see also `FULL_BLEED_CANVAS.md`):**
 
-- Use **`window.innerWidth` / `window.innerHeight` only** for layout math (`readViewportPixelSize()` in the example).
-- **`renderer.setSize(width, height, false)`** so Three.js does not overwrite CSS; the canvas uses `position: fixed; inset: 0`.
-- **ResizeObserver** on a narrow parent was removed for this path; `window` + **`visualViewport`** resize are enough when the sizing source is the viewport.
+- **`readDrawableCssSize(canvas)`** — `Math.max` per axis across canvas layout, `innerWidth`/`innerHeight`, `documentElement.client*`, and `visualViewport`.
+- **`renderer.setSize(width, height, false)`** — CSS controls display size; full-bleed wrapper + absolutely inset canvas (`100dvw`/`100dvh` pattern).
+- **`ResizeObserver`** on canvas, wrapper, and optionally `documentElement`, plus **`window`** and **`visualViewport`** resize, coalesced with `requestAnimationFrame`.
+- Double **`requestAnimationFrame`** on first paint before trusting `clientWidth`.
 
 ## Root cause 4: Canvas placement inside `#root`
 
@@ -67,11 +68,11 @@ Using **`setSize(w, h, false)`** and driving dimensions from the viewport keeps 
 | Area | Approach |
 | --- | --- |
 | Camera | `OrthographicCamera` bounds = particle grid bounds (incl. buffer) |
-| Sizing | `window.innerWidth` / `window.innerHeight` only |
-| DOM | `createPortal(canvas, document.body)` (default; can opt out via prop) |
+| Sizing | `readDrawableCssSize(canvas)` (max of layout + viewport signals) |
+| DOM | Full-bleed wrapper + canvas; optional `createPortal` (opt-in in example) |
 | Renderer | `setSize(w, h, false)` + capped DPR + `powerPreference: "high-performance"` |
-| Stacking | Canvas `z-index: 0`, app root `z-index: 1` (or higher) |
-| Resize | `window` + `visualViewport` |
+| Stacking | Wrapper `z-index: 0`, app root `z-index: 1` (or higher) |
+| Resize | `window` + `visualViewport` + `ResizeObserver` + rAF coalesce |
 
 ## Optional follow-ups
 

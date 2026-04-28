@@ -8,11 +8,12 @@ These notes are **editor- and model-agnostic**: they apply whether the agent run
 
 ## Visual Model
 
-- A fixed full-viewport canvas sits behind page content.
-- **Camera:** use `OrthographicCamera` with frustum bounds matching the particle grid: each frame resize, set `left/right` to `±(innerWidth/2 + buffer)` and `top/bottom` to `±(innerHeight/2 + buffer)` (same `buffer` as the grid padding). This avoids perspective “frustum smaller than the grid” clipping (black side gutters / cropped look). Optional: `PerspectiveCamera` with a computed Z can reduce clipping but still does not give strict 1:1 world units to pixels.
-- **Sizing source:** use `window.innerWidth` and `window.innerHeight` for grid math, camera frustum, and `setSize`. Do not substitute `canvas.parentElement.clientWidth/Height` when any ancestor can be narrower than the viewport.
-- **Portal:** rendering the canvas with `createPortal(..., document.body)` avoids `#root` width clamps and some stacking-context quirks (`transform` / `filter` / `perspective` on ancestors affecting `fixed`).
-- Keep the canvas in a non-negative stacking layer (`z-0` or an equivalent wrapper) and put content above it (`z-index` ≥ 1). A negative z-index can place the canvas behind the body background and make the particles invisible.
+- A **full-bleed wrapper** owns layout: `position: fixed` (or equivalent), `inset: 0`, `100dvw` × `100dvh` (or `100vw`/`100vh`), no `max-width` shrink. The **canvas** is `position: absolute; inset: 0; width/height: 100%`, `display: block`, `max-width: none`, no margin/padding—so CSS controls the painted box and `renderer.setSize(..., false)` only sizes the drawing buffer.
+- **Camera:** `OrthographicCamera` frustum each rebuild: `left/right` = `±(drawableWidth/2 + buffer)`, `top/bottom` = `±(drawableHeight/2 + buffer)`—identical `buffer` to the particle grid. Avoids frustum vs grid mismatch (clipping / offset on resize).
+- **Drawable size:** use `readDrawableCssSize(canvas)`: per axis, `Math.max` of `canvas.clientWidth`, `getBoundingClientRect()` size, `window.inner*`, `document.documentElement.client*`, and `visualViewport` when present—never size the buffer from `innerWidth` alone if the canvas can paint wider (pillarboxing).
+- **Portal:** optional `createPortal(..., document.body)` when `#root` is narrow or stacking is fragile; default in-tree is often easier for dev tooling.
+- Keep the wrapper in a non-negative stacking layer (`z-0`) and put app content above (`z-index` ≥ 1).
+- Set **`points.frustumCulled = false`** for large point sprites.
 - The renderer owns a black `THREE.Scene`.
 - The particle field is made from multiple `THREE.Points` layers, not one mesh per dot.
 - Each layer uses `BufferGeometry` with:
@@ -147,27 +148,27 @@ new THREE.WebGLRenderer({
 })
 ```
 
-Set:
+Set drawing buffer from **`readDrawableCssSize(canvas)`** (see Visual Model), never from `innerWidth` alone if the canvas can paint larger:
 
 ```ts
-const w = window.innerWidth
-const h = window.innerHeight
+const { width, height } = readDrawableCssSize(canvas)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-renderer.setSize(w, h, false) // do not let Three overwrite canvas CSS; use fixed + inset for layout
+renderer.setSize(width, height, false) // false: do not set inline width/height on the canvas element
 renderer.toneMapping = THREE.NoToneMapping
 renderer.outputColorSpace = THREE.SRGBColorSpace
 ```
 
 Add `powerPreference: "high-performance"` on the renderer where supported.
 
-On resize, listen to `window` and `window.visualViewport` (when defined) in addition to—or instead of—`ResizeObserver` on a narrow parent.
+On resize, listen to **`window`**, **`visualViewport`** (when defined), and use **`ResizeObserver`** on the canvas, the full-bleed wrapper, and optionally `document.documentElement`. Coalesce handler work with **`requestAnimationFrame`**.
 
 ## Performance And Cleanup
 
 - Skip rendering when `document.hidden` is true.
 - Use delta time and cap it around `0.1` seconds.
-- Rebuild particle geometry on viewport resize so rows, columns, mobile/desktop layer tiers, and `uMaxDistance` match the new viewport.
-- Dispose generated textures, geometries, materials, render lists, and renderer on unmount.
+- Rebuild particle geometry whenever drawable size changes so rows, columns, mobile/desktop layer tiers, `uMaxDistance`, and the orthographic frustum stay in sync.
+- Set `frustumCulled = false` on `THREE.Points` when using large `gl_PointSize`.
+- Dispose generated textures, geometries, materials, render lists, and renderer on unmount; **`ResizeObserver.disconnect()`** in teardown.
 - Do not create a new Three.js object per particle.
 - Do not drive per-frame animation through React state.
 
@@ -180,6 +181,14 @@ Additive blending can look dim on some displays. Prefer props before editing sha
 ```
 
 (`opacity` above `1` is allowed when your component clamps a sensible max, as in the example.)
+
+## Bounded region (not full viewport)
+
+To fill only a card, hero, or panel:
+
+- Wrap in `position: relative` with explicit width/height (or a flex child with `flex: 1` and a parent height).
+- Reuse the same **wrapper + absolutely inset canvas** pattern inside that box; `readDrawableCssSize(canvas)` follows `clientWidth` / `clientHeight` from the wrapper.
+- Point **`ResizeObserver.observe` at that wrapper** (and/or the canvas). The same pipeline applies: `readDrawableCssSize` → `setSize(..., false)` → orthographic frustum → grid rebuild.
 
 ## Forbidden Additions
 

@@ -145,6 +145,7 @@ new THREE.WebGLRenderer({
   depth: false,
   preserveDrawingBuffer: false,
   failIfMajorPerformanceCaveat: false,
+  powerPreference: "high-performance",
 })
 ```
 

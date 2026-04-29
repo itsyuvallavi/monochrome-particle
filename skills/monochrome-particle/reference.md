@@ -61,6 +61,34 @@ const DEFAULT_CONFIG = {
 }
 ```
 
+### Optional JSON file (demos)
+
+The component does **not** load JSON by itself. For a clean **data vs UI** split (especially Vite + TypeScript demos), add a JSON file with the **same keys** as above, set `"resolveJsonModule": true` in the app `tsconfig` `compilerOptions`, then e.g.:
+
+```tsx
+import particleConfig from "./particle-config.json"
+
+export function App() {
+  return (
+    <>
+      <MonochromeDotsBackground
+        colors={particleConfig.colors}
+        speed={particleConfig.speed}
+        direction={particleConfig.direction}
+        density={particleConfig.density}
+        pointSize={particleConfig.pointSize}
+        opacity={particleConfig.opacity}
+        zoom={particleConfig.zoom}
+      />
+    </>
+  )
+}
+```
+
+Alternatively spread `...particleConfig` if every JSON key matches an optional prop name.
+
+Shipped copy-paste template: `examples/particle-config.example.json` in this skill folder.
+
 ## Shader Contract
 
 Use uniforms for common visual customization:

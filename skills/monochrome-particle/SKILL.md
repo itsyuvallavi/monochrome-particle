@@ -61,6 +61,26 @@ Prefer shader uniforms for runtime-safe visual changes:
 
 When the user asks "make it blue and gold", "slow it down", "reverse direction", "make it denser", "make the dots smaller", or similar, edit the config/props first. Do not ask the user to edit GLSL constants for common visual changes.
 
+### Optional JSON (or other static config) file
+
+The **contract is props** on `MonochromeDotsBackground` (or equivalent). A **separate file is not required** for correctness.
+
+For **demos, Vite apps, or “tune without touching JSX”** workflows, it is **recommended** to keep the same keys in a JSON file (e.g. `src/particle-config.json` or `src/config/backgroundConfig.json`), `import` it in the app root, and spread or pass fields as props. In TypeScript, enable **`resolveJsonModule: true`** in the app `tsconfig` when importing JSON.
+
+Example shape (matches `DEFAULT_CONFIG` in `reference.md`):
+
+```json
+{
+  "colors": { "start": "#14b8d2", "mid": "#b066ec", "end": "#ec599e" },
+  "speed": 1.5,
+  "direction": { "x": 1, "y": 0.2 },
+  "density": 1,
+  "pointSize": 1,
+  "opacity": 1,
+  "zoom": 1
+}
+```
+
 ## Implementation Recipe
 
 - Use a `"use client"` React component with `useEffect` and `useRef` (Next.js App Router); in Vite or CRA you can omit the directive.
@@ -84,6 +104,7 @@ When the user asks "make it blue and gold", "slow it down", "reverse direction",
 
 - Read `reference.md` for shader contracts, sizing, layers, and performance rules.
 - Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component: full-bleed wrapper + canvas, `readDrawableCssSize`, orthographic camera, `setSize(..., false)`, `ResizeObserver` + `window` + `visualViewport`, optional `document.body` portal, and prop-driven customization.
+- Optional: `examples/particle-config.example.json` — copy into your app as e.g. `src/particle-config.json` and import as documented in **Optional JSON** in this file and in `reference.md`.
 
 The repository root includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`** (camera/gutters) and **`FULL_BLEED_CANVAS.md`** (CSS + drawable size + resize). Not part of the Agent Skill folder if you only vendor `skills/monochrome-particle/`.
 

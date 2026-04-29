@@ -1,0 +1,13 @@
+{
+  "colors": {
+    "start": "#14b8d2",
+    "mid": "#b066ec",
+    "end": "#ec599e"
+  },
+  "speed": 1.5,
+  "direction": { "x": 1, "y": 0.2 },
+  "density": 1,
+  "pointSize": 1,
+  "opacity": 1,
+  "zoom": 1
+}

@@ -50,7 +50,7 @@ Required customization surface:
 - `density`: particle density multiplier; changing it rebuilds geometry
 - `pointSize`: point-size multiplier
 - `opacity`: alpha multiplier
-- `zoom`: orthographic “camera zoom” (`1` = fit drawable area; larger values zoom in / center crop). Update the frustum each frame or when this changes; no particle rebuild required.
+- `zoom`: orthographic “camera zoom” (`1` = full half-extents; larger values zoom in / center crop). Shipped example default `1.9`. Update the frustum when this changes; no particle rebuild required.
 
 Prefer shader uniforms for runtime-safe visual changes:
 
@@ -77,7 +77,7 @@ Example shape (matches `DEFAULT_CONFIG` in `reference.md`):
   "density": 1,
   "pointSize": 1,
   "opacity": 1,
-  "zoom": 1
+  "zoom": 1.9
 }
 ```
 

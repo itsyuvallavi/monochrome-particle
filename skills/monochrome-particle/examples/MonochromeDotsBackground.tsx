@@ -22,7 +22,7 @@ type MonochromeDotsBackgroundProps = {
   density?: number
   pointSize?: number
   opacity?: number
-  /** Orthographic zoom: `1` fits the drawable area; larger values zoom in (center crop). Clamped ~0.25–4. */
+  /** Orthographic zoom: `1` uses full half-extents; larger values zoom in (center crop). Default `1.9`. Clamped ~0.25–4. */
   zoom?: number
   /** CSS classes on the full-bleed wrapper (layout box observed by ResizeObserver). */
   wrapperClassName?: string
@@ -172,7 +172,7 @@ function updateOrthographicFrustum(
   camera: THREE.OrthographicCamera,
   width: number,
   height: number,
-  zoom = 1,
+  zoom = 1.9,
 ) {
   const z = Math.max(0.25, Math.min(4, zoom))
   const halfW = (width / 2 + GRID_BUFFER) / z
@@ -225,7 +225,7 @@ export function MonochromeDotsBackground({
   density = 1,
   pointSize = 1,
   opacity = 1,
-  zoom = 1,
+  zoom = 1.9,
   wrapperClassName,
   wrapperStyle,
   className,
@@ -270,7 +270,7 @@ export function MonochromeDotsBackground({
       pointSizeMultiplier: clampMultiplier(pointSize, 1, 0.2, 5),
       opacityMultiplier: clampMultiplier(opacity, 1, 0, 3),
       flowDirection,
-      zoom: clampMultiplier(zoom, 1, 0.25, 4),
+      zoom: clampMultiplier(zoom, 1.9, 0.25, 4),
     }),
     [density, flowDirection, opacity, pointSize, resolvedColors, zoom],
   )

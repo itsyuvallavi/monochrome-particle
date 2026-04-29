@@ -57,7 +57,7 @@ const DEFAULT_CONFIG = {
   density: 1,
   pointSize: 1,
   opacity: 1,
-  zoom: 1,
+  zoom: 1.9,
 }
 ```
 

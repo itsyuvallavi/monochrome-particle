@@ -102,11 +102,12 @@ Example shape (matches `DEFAULT_CONFIG` in `reference.md`):
 
 ## Files To Read
 
+- Read **`FULL_BLEED_CANVAS.md`** (this folder) for edge-to-edge layout, `readDrawableCssSize`, `setSize(..., false)`, resize observers, and anti-pillarboxing rules—**read this before changing sizing or CSS.**
 - Read `reference.md` for shader contracts, sizing, layers, and performance rules.
 - Read `examples/MonochromeDotsBackground.tsx` for a complete background-only component: full-bleed wrapper + canvas, `readDrawableCssSize`, orthographic camera, `setSize(..., false)`, `ResizeObserver` + `window` + `visualViewport`, optional `document.body` portal, and prop-driven customization.
 - Optional: `examples/particle-config.example.json` — copy into your app as e.g. `src/particle-config.json` and import as documented in **Optional JSON** in this file and in `reference.md`.
 
-The repository root includes **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`** (camera/gutters) and **`FULL_BLEED_CANVAS.md`** (CSS + drawable size + resize). Not part of the Agent Skill folder if you only vendor `skills/monochrome-particle/`.
+The repository root also has **`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`** (extra ortho/parity notes). **`FULL_BLEED_CANVAS.md` is duplicated in this skill folder** so vendoring only `skills/monochrome-particle/` still includes the full-bleed guide.
 
 ## Integration
 

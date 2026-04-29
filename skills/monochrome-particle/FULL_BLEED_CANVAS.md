@@ -2,7 +2,7 @@
 
 This note describes what you must change (or keep) so **MonochromeDotsBackground** fills the viewport without black side gutters, stays sharp on DPR changes, and rebuilds when the layout size changes.
 
-Canonical implementation: [`skills/monochrome-particle/examples/MonochromeDotsBackground.tsx`](skills/monochrome-particle/examples/MonochromeDotsBackground.tsx).
+Canonical implementation: [`examples/MonochromeDotsBackground.tsx`](examples/MonochromeDotsBackground.tsx).
 
 ## What goes wrong without these pieces
 
@@ -104,6 +104,4 @@ Verify in a “bad” client (narrow `innerWidth` vs wide paint), with window re
 
 ---
 
-**See also** [`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`](FULL_VIEWPORT_PARTICLE_BACKGROUND.md) for earlier ortho/parity notes.
-
-**Copy in the skill bundle:** the same document ships as [`FULL_BLEED_CANVAS.md`](skills/monochrome-particle/FULL_BLEED_CANVAS.md) next to `SKILL.md` so vendored `skills/monochrome-particle/` includes it.
+**See also** [`FULL_VIEWPORT_PARTICLE_BACKGROUND.md`](../../FULL_VIEWPORT_PARTICLE_BACKGROUND.md) at the repository root for earlier ortho/parity notes.

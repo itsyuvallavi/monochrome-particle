@@ -89,6 +89,8 @@ Alternatively spread `...particleConfig` if every JSON key matches an optional p
 
 Shipped copy-paste template: `examples/particle-config.example.json` in this skill folder.
 
+**Full-bleed sizing (no pillarboxing):** read `FULL_BLEED_CANVAS.md` in the same folder as `SKILL.md`—especially `readDrawableCssSize`, `setSize(..., false)`, and `ResizeObserver` / `visualViewport`.
+
 ## Shader Contract
 
 Use uniforms for common visual customization:
